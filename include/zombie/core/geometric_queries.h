@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <concepts>
 #include <functional>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -23,6 +24,7 @@ template <size_t DIM>
 using Vector = Eigen::Matrix<float, DIM, 1>;
 using Vector2 = Vector<2>;
 using Vector3 = Vector<3>;
+
 
 template <size_t DIM>
 struct IntersectionPoint {
@@ -49,6 +51,54 @@ struct BoundarySample {
     Vector<DIM> pt;
     Vector<DIM> normal;
     float pdf;
+};
+
+template <typename T, size_t DIM>
+concept IsGeometricQueries = requires(T t, Vector<DIM> v, bool b, float f,
+                                      IntersectionPoint<DIM> pt,
+                                      std::vector<IntersectionPoint<DIM>> pts,
+                                      BoundarySample<DIM> bs) {
+    { t.hasNonEmptyAbsorbingBoundary } -> std::convertible_to<bool>;
+    { t.hasNonEmptyReflectingBoundary } -> std::convertible_to<bool>;
+    { t.domainIsWatertight } -> std::convertible_to<bool>;
+    { t.domainMin } -> std::convertible_to<Vector<DIM>>;
+    { t.domainMax } -> std::convertible_to<Vector<DIM>>;
+
+    { t.computeDistToAbsorbingBoundary(v, b) } -> std::convertible_to<float>;
+    { t.computeDistToReflectingBoundary(v, b) } -> std::convertible_to<float>;
+    { t.computeDistToBoundary(v, b) } -> std::convertible_to<float>;
+
+    { t.projectToAbsorbingBoundary(v, v, f, b) } -> std::convertible_to<bool>;
+    { t.projectToReflectingBoundary(v, v, f, b) } -> std::convertible_to<bool>;
+    { t.projectToBoundary(v, v, f, b) } -> std::convertible_to<bool>;
+
+    { t.intersectAbsorbingBoundary(v, v, v, f, b, pt) } -> std::convertible_to<bool>;
+    { t.intersectReflectingBoundary(v, v, v, f, b, pt) } -> std::convertible_to<bool>;
+    { t.intersectBoundary(v, v, v, f, b, b, pt) } -> std::convertible_to<bool>;
+    { t.intersectAbsorbingBoundaryAllHits(v, v, v, f, b, pts) } -> std::convertible_to<int>;
+    { t.intersectReflectingBoundaryAllHits(v, v, v, f, b, pts) } -> std::convertible_to<int>;
+    { t.intersectBoundaryAllHits(v, v, v, f, b, b, pts) } -> std::convertible_to<int>;
+    //
+    // checks whether there is a line of sight between two points
+    { t.intersectsWithReflectingBoundary(v, v, v, v, b, b) } -> std::convertible_to<bool>;
+
+    // samples a point on the reflecting boundary
+    { t.sampleReflectingBoundary(v, f, v, bs) } -> std::convertible_to<bool>;
+
+    // computes the radius of a star-shaped region on the reflecting boundary
+    { t.computeStarRadiusForReflectingBoundary(v, f, f, f, b) } -> std::convertible_to<float>;
+
+    // checks if a point is inside the domain (assuming it is watertight)
+    { t.insideDomain(v) } -> std::convertible_to<bool>;
+
+    // checks if a point is inside or outside the bounding domain
+    { t.insideBoundingDomain(v) } -> std::convertible_to<bool>;
+    { t.outsideBoundingDomain(v) } -> std::convertible_to<bool>;
+
+    // computes the signed volume of the domain
+    { t.computeAbsorbingBoundarySignedVolume() } -> std::convertible_to<float>;
+    { t.computeReflectingBoundarySignedVolume() } -> std::convertible_to<float>;
+    { t.computeDomainSignedVolume() } -> std::convertible_to<float>;
 };
 
 template <size_t DIM>
