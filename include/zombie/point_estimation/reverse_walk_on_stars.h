@@ -25,11 +25,11 @@ using SplatContributionCallback = std::function<void(const WalkState<T, DIM>&,
                                                      const std::unique_ptr<GreensFnBall<DIM>>&,
                                                      const SamplePoint<T, DIM>&)>;
 
-template <typename T, size_t DIM>
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
 class ReverseWalkOnStars {
 public:
     // constructor
-    ReverseWalkOnStars(const GeometricQueries<DIM>& queries_,
+    ReverseWalkOnStars(const GeoQs& queries_,
                        SplatContributionCallback<T, DIM> splatContribution_);
 
     // solves the given PDE by splatting contributions (dirichlet/neumann/robin/source)
@@ -70,23 +70,23 @@ public:
                             std::queue<WalkState<T, DIM>>& stateQueue) const;
 
     // members
-    const GeometricQueries<DIM>& queries;
+    const GeoQs& queries;
     SplatContributionCallback<T, DIM> splatContribution;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-template <typename T, size_t DIM>
-inline ReverseWalkOnStars<T, DIM>::ReverseWalkOnStars(const GeometricQueries<DIM>& queries_,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline ReverseWalkOnStars<T, DIM, GeoQs>::ReverseWalkOnStars(const GeoQs& queries_,
                                                       SplatContributionCallback<T, DIM> splatContribution_):
                                                       queries(queries_), splatContribution(splatContribution_)
 {
     // do nothing
 }
 
-template <typename T, size_t DIM>
-inline void ReverseWalkOnStars<T, DIM>::solve(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void ReverseWalkOnStars<T, DIM, GeoQs>::solve(const PDE<T, DIM>& pde,
                                               const WalkSettings& walkSettings,
                                               SamplePoint<T, DIM>& samplePt) const
 {
@@ -164,8 +164,8 @@ inline void ReverseWalkOnStars<T, DIM>::solve(const PDE<T, DIM>& pde,
     }
 }
 
-template <typename T, size_t DIM>
-inline void ReverseWalkOnStars<T, DIM>::solve(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void ReverseWalkOnStars<T, DIM, GeoQs>::solve(const PDE<T, DIM>& pde,
                                               const WalkSettings& walkSettings,
                                               std::vector<SamplePoint<T, DIM>>& samplePts,
                                               bool runSingleThreaded,
@@ -195,8 +195,8 @@ inline void ReverseWalkOnStars<T, DIM>::solve(const PDE<T, DIM>& pde,
     }
 }
 
-template <typename T, size_t DIM>
-inline float ReverseWalkOnStars<T, DIM>::computeWalkStepThroughput(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline float ReverseWalkOnStars<T, DIM, GeoQs>::computeWalkStepThroughput(const PDE<T, DIM>& pde,
                                                                    const WalkSettings& walkSettings,
                                                                    const std::unique_ptr<GreensFnBall<DIM>>& greensFn,
                                                                    const WalkState<T, DIM>& state) const
@@ -227,8 +227,8 @@ inline float ReverseWalkOnStars<T, DIM>::computeWalkStepThroughput(const PDE<T, 
     return greensFn->directionSampledPoissonKernel(state.currentPt);
 }
 
-template <typename T, size_t DIM>
-inline bool ReverseWalkOnStars<T, DIM>::applyWeightWindow(const WalkSettings& walkSettings,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline bool ReverseWalkOnStars<T, DIM, GeoQs>::applyWeightWindow(const WalkSettings& walkSettings,
                                                           pcg32& rng, WalkState<T, DIM>& state,
                                                           std::queue<WalkState<T, DIM>>& stateQueue) const
 {
@@ -263,8 +263,8 @@ inline bool ReverseWalkOnStars<T, DIM>::applyWeightWindow(const WalkSettings& wa
     return false;
 }
 
-template <typename T, size_t DIM>
-inline WalkCompletionCode ReverseWalkOnStars<T, DIM>::walk(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline WalkCompletionCode ReverseWalkOnStars<T, DIM, GeoQs>::walk(const PDE<T, DIM>& pde,
                                                            const WalkSettings& walkSettings,
                                                            const SamplePoint<T, DIM>& samplePt,
                                                            float distToAbsorbingBoundary,

@@ -17,12 +17,12 @@
 
 namespace zombie {
 
-template <typename T, size_t DIM>
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
 class WalkOnSpheres {
 public:
     // constructors
-    WalkOnSpheres(const GeometricQueries<DIM>& queries_);
-    WalkOnSpheres(const GeometricQueries<DIM>& queries_,
+    WalkOnSpheres(const GeoQs& queries_);
+    WalkOnSpheres(const GeoQs& queries_,
                   std::function<void(const WalkState<T, DIM>&)> walkStateCallback_,
                   std::function<T(WalkCompletionCode, const WalkState<T, DIM>&)> terminalContributionCallback_);
 
@@ -86,7 +86,7 @@ public:
                                      SampleStatistics<T, DIM>& statistics) const;
 
     // members
-    const GeometricQueries<DIM>& queries;
+    const GeoQs& queries;
     std::function<void(const WalkState<T, DIM>&)> walkStateCallback;
     std::function<T(WalkCompletionCode, const WalkState<T, DIM>&)> terminalContributionCallback;
 };
@@ -94,16 +94,16 @@ public:
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-template <typename T, size_t DIM>
-inline WalkOnSpheres<T, DIM>::WalkOnSpheres(const GeometricQueries<DIM>& queries_):
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline WalkOnSpheres<T, DIM, GeoQs>::WalkOnSpheres(const GeoQs& queries_):
                                             queries(queries_), walkStateCallback({}),
                                             terminalContributionCallback({})
 {
     // do nothing
 }
 
-template <typename T, size_t DIM>
-inline WalkOnSpheres<T, DIM>::WalkOnSpheres(const GeometricQueries<DIM>& queries_,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline WalkOnSpheres<T, DIM, GeoQs>::WalkOnSpheres(const GeoQs& queries_,
                                             std::function<void(const WalkState<T, DIM>&)> walkStateCallback_,
                                             std::function<T(WalkCompletionCode, const WalkState<T, DIM>&)> terminalContributionCallback_):
                                             queries(queries_), walkStateCallback(walkStateCallback_),
@@ -112,8 +112,8 @@ inline WalkOnSpheres<T, DIM>::WalkOnSpheres(const GeometricQueries<DIM>& queries
     // do nothing
 }
 
-template <typename T, size_t DIM>
-inline void WalkOnSpheres<T, DIM>::solve(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void WalkOnSpheres<T, DIM, GeoQs>::solve(const PDE<T, DIM>& pde,
                                          const WalkSettings& walkSettings,
                                          int nWalks, SamplePoint<T, DIM>& samplePt,
                                          SampleStatistics<T, DIM>& statistics) const
@@ -128,8 +128,8 @@ inline void WalkOnSpheres<T, DIM>::solve(const PDE<T, DIM>& pde,
     }
 }
 
-template <typename T, size_t DIM>
-inline void WalkOnSpheres<T, DIM>::solve(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void WalkOnSpheres<T, DIM, GeoQs>::solve(const PDE<T, DIM>& pde,
                                          const WalkSettings& walkSettings,
                                          const std::vector<int>& nWalks,
                                          std::vector<SamplePoint<T, DIM>>& samplePts,
@@ -167,8 +167,8 @@ inline void WalkOnSpheres<T, DIM>::solve(const PDE<T, DIM>& pde,
     }
 }
 
-template <typename T, size_t DIM>
-inline void WalkOnSpheres<T, DIM>::computeSourceContribution(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void WalkOnSpheres<T, DIM, GeoQs>::computeSourceContribution(const PDE<T, DIM>& pde,
                                                              const WalkSettings& walkSettings,
                                                              const std::unique_ptr<GreensFnBall<DIM>>& greensFn,
                                                              pcg32& rng, WalkState<T, DIM>& state) const
@@ -182,8 +182,8 @@ inline void WalkOnSpheres<T, DIM>::computeSourceContribution(const PDE<T, DIM>& 
     }
 }
 
-template <typename T, size_t DIM>
-inline bool WalkOnSpheres<T, DIM>::applyWeightWindow(const WalkSettings& walkSettings,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline bool WalkOnSpheres<T, DIM, GeoQs>::applyWeightWindow(const WalkSettings& walkSettings,
                                                      pcg32& rng, WalkState<T, DIM>& state,
                                                      std::queue<WalkState<T, DIM>>& stateQueue) const
 {
@@ -218,8 +218,8 @@ inline bool WalkOnSpheres<T, DIM>::applyWeightWindow(const WalkSettings& walkSet
     return false;
 }
 
-template <typename T, size_t DIM>
-inline WalkCompletionCode WalkOnSpheres<T, DIM>::walk(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline WalkCompletionCode WalkOnSpheres<T, DIM, GeoQs>::walk(const PDE<T, DIM>& pde,
                                                       const WalkSettings& walkSettings,
                                                       float distToAbsorbingBoundary,
                                                       std::unique_ptr<GreensFnBall<DIM>>& greensFn,
@@ -284,8 +284,8 @@ inline WalkCompletionCode WalkOnSpheres<T, DIM>::walk(const PDE<T, DIM>& pde,
     return WalkCompletionCode::ReachedAbsorbingBoundary;
 }
 
-template <typename T, size_t DIM>
-inline T WalkOnSpheres<T, DIM>::getTerminalContribution(WalkCompletionCode code,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline T WalkOnSpheres<T, DIM, GeoQs>::getTerminalContribution(WalkCompletionCode code,
                                                         const PDE<T, DIM>& pde,
                                                         const WalkSettings& walkSettings,
                                                         WalkState<T, DIM>& state) const
@@ -311,8 +311,8 @@ inline T WalkOnSpheres<T, DIM>::getTerminalContribution(WalkCompletionCode code,
     return T(0.0f);
 }
 
-template <typename T, size_t DIM>
-inline void WalkOnSpheres<T, DIM>::estimateSolution(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void WalkOnSpheres<T, DIM, GeoQs>::estimateSolution(const PDE<T, DIM>& pde,
                                                     const WalkSettings& walkSettings,
                                                     int nWalks, SamplePoint<T, DIM>& samplePt,
                                                     SampleStatistics<T, DIM>& statistics) const
@@ -407,8 +407,8 @@ inline void WalkOnSpheres<T, DIM>::estimateSolution(const PDE<T, DIM>& pde,
     }
 }
 
-template <typename T, size_t DIM>
-inline void WalkOnSpheres<T, DIM>::estimateSolutionAndGradient(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void WalkOnSpheres<T, DIM, GeoQs>::estimateSolutionAndGradient(const PDE<T, DIM>& pde,
                                                                const WalkSettings& walkSettings,
                                                                int nWalks, SamplePoint<T, DIM>& samplePt,
                                                                SampleStatistics<T, DIM>& statistics) const

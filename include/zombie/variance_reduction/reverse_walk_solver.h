@@ -49,11 +49,11 @@ struct EvaluationPoint {
     std::shared_ptr<tbb::spin_mutex> mutex;
 };
 
-template <typename T, size_t DIM, typename NearestNeighborFinder>
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs, typename NearestNeighborFinder>
 class ReverseWalkOnStarsSolver {
 public:
     // constructor
-    ReverseWalkOnStarsSolver(const GeometricQueries<DIM>& queries_,
+    ReverseWalkOnStarsSolver(const GeoQs& queries_,
                              std::shared_ptr<BoundarySampler<T, DIM>> absorbingBoundarySampler_,
                              std::shared_ptr<BoundarySampler<T, DIM>> reflectingBoundarySampler_,
                              std::shared_ptr<DomainSampler<T, DIM>> domainSampler_);
@@ -88,7 +88,7 @@ public:
 
 protected:
     // members
-    const GeometricQueries<DIM>& queries;
+    const GeoQs& queries;
     std::shared_ptr<BoundarySampler<T, DIM>> absorbingBoundarySampler;
     std::shared_ptr<BoundarySampler<T, DIM>> reflectingBoundarySampler;
     std::shared_ptr<DomainSampler<T, DIM>> domainSampler;
@@ -174,8 +174,8 @@ void EvaluationPoint<T, DIM>::reset()
     totalSourceContribution = T(0.0f);
 }
 
-template <typename T, size_t DIM, typename NearestNeighborFinder>
-inline ReverseWalkOnStarsSolver<T, DIM, NearestNeighborFinder>::ReverseWalkOnStarsSolver(const GeometricQueries<DIM>& queries_,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs, typename NearestNeighborFinder>
+inline ReverseWalkOnStarsSolver<T, DIM, GeoQs, NearestNeighborFinder>::ReverseWalkOnStarsSolver(const GeoQs& queries_,
                                                                                          std::shared_ptr<BoundarySampler<T, DIM>> absorbingBoundarySampler_,
                                                                                          std::shared_ptr<BoundarySampler<T, DIM>> reflectingBoundarySampler_,
                                                                                          std::shared_ptr<DomainSampler<T, DIM>> domainSampler_):
@@ -187,8 +187,8 @@ inline ReverseWalkOnStarsSolver<T, DIM, NearestNeighborFinder>::ReverseWalkOnSta
     // do nothing
 }
 
-template <typename T, size_t DIM, typename NearestNeighborFinder>
-inline void ReverseWalkOnStarsSolver<T, DIM, NearestNeighborFinder>::generateSamples(int absorbingBoundarySampleCount,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs, typename NearestNeighborFinder>
+inline void ReverseWalkOnStarsSolver<T, DIM, GeoQs, NearestNeighborFinder>::generateSamples(int absorbingBoundarySampleCount,
                                                                                      int reflectingBoundarySampleCount,
                                                                                      int domainSampleCount,
                                                                                      float normalOffsetForAbsorbingBoundary,
@@ -215,12 +215,12 @@ inline void ReverseWalkOnStarsSolver<T, DIM, NearestNeighborFinder>::generateSam
     domainSampler->generateSamples(domainSampleCount, queries, domainSamplePts);
 }
 
-template <typename T, size_t DIM, typename NearestNeighborFinder>
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs, typename NearestNeighborFinder>
 void splatContribution(const WalkState<T, DIM>& state,
                        const std::unique_ptr<GreensFnBall<DIM>>& greensFn,
                        const SamplePoint<T, DIM>& samplePt,
                        const PDE<T, DIM>& pde,
-                       const GeometricQueries<DIM>& queries,
+                       const GeoQs& queries,
                        const NearestNeighborFinder& nearestNeighborFinder,
                        float normalOffsetForAbsorbingBoundary,
                        float radiusClamp, float kernelRegularization,
@@ -281,8 +281,8 @@ void splatContribution(const WalkState<T, DIM>& state,
     }
 }
 
-template <typename T, size_t DIM, typename NearestNeighborFinder>
-inline void ReverseWalkOnStarsSolver<T, DIM, NearestNeighborFinder>::solve(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs, typename NearestNeighborFinder>
+inline void ReverseWalkOnStarsSolver<T, DIM, GeoQs, NearestNeighborFinder>::solve(const PDE<T, DIM>& pde,
                                                                            const WalkSettings& walkSettings,
                                                                            float normalOffsetForAbsorbingBoundary,
                                                                            float radiusClamp,
@@ -303,13 +303,13 @@ inline void ReverseWalkOnStarsSolver<T, DIM, NearestNeighborFinder>::solve(const
     }
 
     // bind splat contribution callback and initialize solver
-    SplatContributionCallback<T, DIM> splatContributionCallback = std::bind(&splatContribution<T, DIM, NearestNeighborFinder>,
+    SplatContributionCallback<T, DIM> splatContributionCallback = std::bind(&splatContribution<T, DIM, GeoQs, NearestNeighborFinder>,
                                                                             std::placeholders::_1, std::placeholders::_2,
                                                                             std::placeholders::_3, std::cref(pde),
                                                                             std::cref(queries), std::cref(nearestNeighborFinder),
                                                                             normalOffsetForAbsorbingBoundary, radiusClamp,
                                                                             kernelRegularization, std::ref(evalPts));
-    ReverseWalkOnStars<T, DIM> reverseWalkOnStars(queries, splatContributionCallback);
+    ReverseWalkOnStars<T, DIM, decltype(queries)> reverseWalkOnStars(queries, splatContributionCallback);
 
     // solve the PDE by splatting contributions from walks starting at the input sample points
     reverseWalkOnStars.solve(pde, walkSettings, absorbingBoundarySamplePts, runSingleThreaded, reportProgress);
@@ -327,40 +327,40 @@ inline void ReverseWalkOnStarsSolver<T, DIM, NearestNeighborFinder>::solve(const
     }
 }
 
-template <typename T, size_t DIM, typename NearestNeighborFinder>
-inline const std::vector<SamplePoint<T, DIM>>& ReverseWalkOnStarsSolver<T, DIM, NearestNeighborFinder>::getAbsorbingBoundarySamplePts(bool returnBoundaryNormalAligned) const
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs, typename NearestNeighborFinder>
+inline const std::vector<SamplePoint<T, DIM>>& ReverseWalkOnStarsSolver<T, DIM, GeoQs, NearestNeighborFinder>::getAbsorbingBoundarySamplePts(bool returnBoundaryNormalAligned) const
 {
     return returnBoundaryNormalAligned ? absorbingBoundaryNormalAlignedSamplePts : absorbingBoundarySamplePts;
 }
 
-template <typename T, size_t DIM, typename NearestNeighborFinder>
-inline const std::vector<SamplePoint<T, DIM>>& ReverseWalkOnStarsSolver<T, DIM, NearestNeighborFinder>::getReflectingBoundarySamplePts(bool returnBoundaryNormalAligned) const
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs, typename NearestNeighborFinder>
+inline const std::vector<SamplePoint<T, DIM>>& ReverseWalkOnStarsSolver<T, DIM, GeoQs, NearestNeighborFinder>::getReflectingBoundarySamplePts(bool returnBoundaryNormalAligned) const
 {
     return returnBoundaryNormalAligned ? reflectingBoundaryNormalAlignedSamplePts : reflectingBoundarySamplePts;
 }
 
-template <typename T, size_t DIM, typename NearestNeighborFinder>
-inline const std::vector<SamplePoint<T, DIM>>& ReverseWalkOnStarsSolver<T, DIM, NearestNeighborFinder>::getDomainSamplePts() const
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs, typename NearestNeighborFinder>
+inline const std::vector<SamplePoint<T, DIM>>& ReverseWalkOnStarsSolver<T, DIM, GeoQs, NearestNeighborFinder>::getDomainSamplePts() const
 {
     return domainSamplePts;
 }
 
-template <typename T, size_t DIM, typename NearestNeighborFinder>
-inline int ReverseWalkOnStarsSolver<T, DIM, NearestNeighborFinder>::getAbsorbingBoundarySampleCount(bool returnBoundaryNormalAligned) const
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs, typename NearestNeighborFinder>
+inline int ReverseWalkOnStarsSolver<T, DIM, GeoQs, NearestNeighborFinder>::getAbsorbingBoundarySampleCount(bool returnBoundaryNormalAligned) const
 {
     return returnBoundaryNormalAligned ? (int)absorbingBoundaryNormalAlignedSamplePts.size() :
                                          (int)absorbingBoundarySamplePts.size();
 }
 
-template <typename T, size_t DIM, typename NearestNeighborFinder>
-inline int ReverseWalkOnStarsSolver<T, DIM, NearestNeighborFinder>::getReflectingBoundarySampleCount(bool returnBoundaryNormalAligned) const
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs, typename NearestNeighborFinder>
+inline int ReverseWalkOnStarsSolver<T, DIM, GeoQs, NearestNeighborFinder>::getReflectingBoundarySampleCount(bool returnBoundaryNormalAligned) const
 {
     return returnBoundaryNormalAligned ? (int)reflectingBoundaryNormalAlignedSamplePts.size() :
                                          (int)reflectingBoundarySamplePts.size();
 }
 
-template <typename T, size_t DIM, typename NearestNeighborFinder>
-inline int ReverseWalkOnStarsSolver<T, DIM, NearestNeighborFinder>::getDomainSampleCount() const
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs, typename NearestNeighborFinder>
+inline int ReverseWalkOnStarsSolver<T, DIM, GeoQs, NearestNeighborFinder>::getDomainSampleCount() const
 {
     return (int)domainSamplePts.size();
 }

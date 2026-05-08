@@ -19,12 +19,12 @@
 
 namespace zombie {
 
-template <typename T, size_t DIM>
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
 class WalkOnStars {
 public:
     // constructors
-    WalkOnStars(const GeometricQueries<DIM>& queries_);
-    WalkOnStars(const GeometricQueries<DIM>& queries_,
+    WalkOnStars(const GeoQs& queries_);
+    WalkOnStars(const GeoQs& queries_,
                 std::function<void(const WalkState<T, DIM>&)> walkStateCallback_,
                 std::function<T(WalkCompletionCode, const WalkState<T, DIM>&)> terminalContributionCallback_);
 
@@ -105,7 +105,7 @@ public:
                                      SampleStatistics<T, DIM>& statistics) const;
 
     // members
-    const GeometricQueries<DIM>& queries;
+    const GeoQs& queries;
     std::function<void(const WalkState<T, DIM>&)> walkStateCallback;
     std::function<T(WalkCompletionCode, const WalkState<T, DIM>&)> terminalContributionCallback;
 };
@@ -113,16 +113,16 @@ public:
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-template <typename T, size_t DIM>
-inline WalkOnStars<T, DIM>::WalkOnStars(const GeometricQueries<DIM>& queries_):
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline WalkOnStars<T, DIM, GeoQs>::WalkOnStars(const GeoQs& queries_):
                                         queries(queries_), walkStateCallback({}),
                                         terminalContributionCallback({})
 {
     // do nothing
 }
 
-template <typename T, size_t DIM>
-inline WalkOnStars<T, DIM>::WalkOnStars(const GeometricQueries<DIM>& queries_,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline WalkOnStars<T, DIM, GeoQs>::WalkOnStars(const GeoQs& queries_,
                                         std::function<void(const WalkState<T, DIM>&)> walkStateCallback_,
                                         std::function<T(WalkCompletionCode, const WalkState<T, DIM>&)> terminalContributionCallback_):
                                         queries(queries_), walkStateCallback(walkStateCallback_),
@@ -131,8 +131,8 @@ inline WalkOnStars<T, DIM>::WalkOnStars(const GeometricQueries<DIM>& queries_,
     // do nothing
 }
 
-template <typename T, size_t DIM>
-inline void WalkOnStars<T, DIM>::solve(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void WalkOnStars<T, DIM, GeoQs>::solve(const PDE<T, DIM>& pde,
                                        const WalkSettings& walkSettings,
                                        int nWalks, SamplePoint<T, DIM>& samplePt,
                                        SampleStatistics<T, DIM>& statistics) const
@@ -147,8 +147,8 @@ inline void WalkOnStars<T, DIM>::solve(const PDE<T, DIM>& pde,
     }
 }
 
-template <typename T, size_t DIM>
-inline void WalkOnStars<T, DIM>::solve(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void WalkOnStars<T, DIM, GeoQs>::solve(const PDE<T, DIM>& pde,
                                        const WalkSettings& walkSettings,
                                        const std::vector<int>& nWalks,
                                        std::vector<SamplePoint<T, DIM>>& samplePts,
@@ -186,8 +186,8 @@ inline void WalkOnStars<T, DIM>::solve(const PDE<T, DIM>& pde,
     }
 }
 
-template <typename T, size_t DIM>
-inline void WalkOnStars<T, DIM>::computeReflectingBoundaryContribution(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void WalkOnStars<T, DIM, GeoQs>::computeReflectingBoundaryContribution(const PDE<T, DIM>& pde,
                                                                        const WalkSettings& walkSettings,
                                                                        const std::unique_ptr<GreensFnBall<DIM>>& greensFn,
                                                                        float starRadius, bool flipNormalOrientation,
@@ -249,8 +249,8 @@ inline void WalkOnStars<T, DIM>::computeReflectingBoundaryContribution(const PDE
     }
 }
 
-template <typename T, size_t DIM>
-inline void WalkOnStars<T, DIM>::computeSourceContribution(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void WalkOnStars<T, DIM, GeoQs>::computeSourceContribution(const PDE<T, DIM>& pde,
                                                            const WalkSettings& walkSettings,
                                                            const std::unique_ptr<GreensFnBall<DIM>>& greensFn,
                                                            const Vector<DIM>& direction,
@@ -274,8 +274,8 @@ inline void WalkOnStars<T, DIM>::computeSourceContribution(const PDE<T, DIM>& pd
     }
 }
 
-template <typename T, size_t DIM>
-inline float WalkOnStars<T, DIM>::computeWalkStepThroughput(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline float WalkOnStars<T, DIM, GeoQs>::computeWalkStepThroughput(const PDE<T, DIM>& pde,
                                                             const WalkSettings& walkSettings,
                                                             const std::unique_ptr<GreensFnBall<DIM>>& greensFn,
                                                             const WalkState<T, DIM>& state) const
@@ -306,8 +306,8 @@ inline float WalkOnStars<T, DIM>::computeWalkStepThroughput(const PDE<T, DIM>& p
     return greensFn->directionSampledPoissonKernel(state.currentPt);
 }
 
-template <typename T, size_t DIM>
-inline bool WalkOnStars<T, DIM>::applyWeightWindow(const WalkSettings& walkSettings,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline bool WalkOnStars<T, DIM, GeoQs>::applyWeightWindow(const WalkSettings& walkSettings,
                                                    pcg32& rng, WalkState<T, DIM>& state,
                                                    std::queue<WalkState<T, DIM>>& stateQueue) const
 {
@@ -342,8 +342,8 @@ inline bool WalkOnStars<T, DIM>::applyWeightWindow(const WalkSettings& walkSetti
     return false;
 }
 
-template <typename T, size_t DIM>
-inline WalkCompletionCode WalkOnStars<T, DIM>::walk(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline WalkCompletionCode WalkOnStars<T, DIM, GeoQs>::walk(const PDE<T, DIM>& pde,
                                                     const WalkSettings& walkSettings,
                                                     float distToAbsorbingBoundary,
                                                     float firstSphereRadius,
@@ -490,8 +490,8 @@ inline WalkCompletionCode WalkOnStars<T, DIM>::walk(const PDE<T, DIM>& pde,
     return WalkCompletionCode::ReachedAbsorbingBoundary;
 }
 
-template <typename T, size_t DIM>
-inline T WalkOnStars<T, DIM>::getTerminalContribution(WalkCompletionCode code,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline T WalkOnStars<T, DIM, GeoQs>::getTerminalContribution(WalkCompletionCode code,
                                                       const PDE<T, DIM>& pde,
                                                       const WalkSettings& walkSettings,
                                                       WalkState<T, DIM>& state) const
@@ -516,8 +516,8 @@ inline T WalkOnStars<T, DIM>::getTerminalContribution(WalkCompletionCode code,
     return T(0.0f);
 }
 
-template <typename T, size_t DIM>
-inline void WalkOnStars<T, DIM>::estimateSolution(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void WalkOnStars<T, DIM, GeoQs>::estimateSolution(const PDE<T, DIM>& pde,
                                                   const WalkSettings& walkSettings,
                                                   int nWalks, SamplePoint<T, DIM>& samplePt,
                                                   SampleStatistics<T, DIM>& statistics) const
@@ -662,8 +662,8 @@ inline void WalkOnStars<T, DIM>::estimateSolution(const PDE<T, DIM>& pde,
     }
 }
 
-template <typename T, size_t DIM>
-inline void WalkOnStars<T, DIM>::estimateSolutionAndGradient(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void WalkOnStars<T, DIM, GeoQs>::estimateSolutionAndGradient(const PDE<T, DIM>& pde,
                                                              const WalkSettings& walkSettings,
                                                              int nWalks, SamplePoint<T, DIM>& samplePt,
                                                              SampleStatistics<T, DIM>& statistics) const

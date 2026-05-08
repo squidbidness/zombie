@@ -87,7 +87,7 @@ void runWalkOnSpheres(const json& solverConfig,
                                       ignoreAbsorbingBoundaryContribution, true,
                                       ignoreSourceContribution, printLogs);
     std::vector<int> nWalksVector(samplePts.size(), nWalks);
-    zombie::WalkOnSpheres<T, DIM> walkOnSpheres(queries);
+    zombie::WalkOnSpheres<T, DIM, decltype(queries)> walkOnSpheres(queries);
     walkOnSpheres.solve(pde, walkSettings, nWalksVector, samplePts, sampleStatistics,
                         runSingleThreaded, reportProgress);
     pb.finish();
@@ -141,7 +141,7 @@ void runWalkOnStars(const json& solverConfig,
                                       ignoreReflectingBoundaryContribution,
                                       ignoreSourceContribution, printLogs);
     std::vector<int> nWalksVector(samplePts.size(), nWalks);
-    zombie::WalkOnStars<T, DIM> walkOnStars(queries);
+    zombie::WalkOnStars<T, DIM, decltype(queries)> walkOnStars(queries);
     walkOnStars.solve(pde, walkSettings, nWalksVector, samplePts, sampleStatistics,
                       runSingleThreaded, reportProgress);
     pb.finish();
@@ -277,7 +277,7 @@ void runBoundaryValueCaching(const json& solverConfig,
     ProgressBar pb(totalWork);
     std::function<void(int, int)> reportProgress = getReportProgressCallback(pb);
 
-    zombie::bvc::BoundaryValueCachingSolver<T, DIM> boundaryValueCaching(
+    zombie::bvc::BoundaryValueCachingSolver<T, DIM, decltype(queries)> boundaryValueCaching(
         queries, absorbingBoundarySampler, reflectingBoundarySampler, domainSampler);
 
     // generate boundary and domain samples
@@ -422,7 +422,7 @@ void runReverseWalkOnStars(const json& solverConfig,
     ProgressBar pb(totalWork);
     std::function<void(int, int)> reportProgress = getReportProgressCallback(pb);
 
-    zombie::rws::ReverseWalkOnStarsSolver<T, DIM, zombie::NearestNeighborFinder<DIM>> reverseWalkOnStars(
+    zombie::rws::ReverseWalkOnStarsSolver<T, DIM, decltype(queries), zombie::NearestNeighborFinder<DIM>> reverseWalkOnStars(
         queries, absorbingBoundarySampler, reflectingBoundarySampler, domainSampler);
 
     // generate boundary and domain samples

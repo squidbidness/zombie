@@ -49,16 +49,16 @@ protected:
     SampleStatistics<T, DIM> reflectingBoundaryNormalAlignedStatistics;
     SampleStatistics<T, DIM> sourceStatistics;
 
-    template <typename A, size_t B>
+    template <typename A, size_t B, IsGeometricQueries<B> GeoQs>
     friend class BoundaryValueCaching;
 };
 
-template <typename T, size_t DIM>
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
 class BoundaryValueCaching {
 public:
     // constructor
-    BoundaryValueCaching(const GeometricQueries<DIM>& queries_,
-                         const WalkOnStars<T, DIM>& walkOnStars_);
+    BoundaryValueCaching(const GeoQs& queries_,
+                         const WalkOnStars<T, DIM, GeoQs>& walkOnStars_);
 
     // solves the given PDE at the provided sample points
     void computeBoundaryEstimates(const PDE<T, DIM>& pde,
@@ -168,15 +168,15 @@ protected:
                          EvaluationPoint<T, DIM>& evalPt) const;
 
     // members
-    const GeometricQueries<DIM>& queries;
-    const WalkOnStars<T, DIM>& walkOnStars;
+    const GeoQs& queries;
+    const WalkOnStars<T, DIM, GeoQs>& walkOnStars;
 };
 
-template <typename T, size_t DIM>
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
 class BoundaryValueCachingSolver {
 public:
     // constructor
-    BoundaryValueCachingSolver(const GeometricQueries<DIM>& queries_,
+    BoundaryValueCachingSolver(const GeoQs& queries_,
                                std::shared_ptr<BoundarySampler<T, DIM>> absorbingBoundarySampler_,
                                std::shared_ptr<BoundarySampler<T, DIM>> reflectingBoundarySampler_,
                                std::shared_ptr<DomainSampler<T, DIM>> domainSampler_);
@@ -225,12 +225,12 @@ public:
 
 protected:
     // members
-    const GeometricQueries<DIM>& queries;
+    const GeoQs& queries;
     std::shared_ptr<BoundarySampler<T, DIM>> absorbingBoundarySampler;
     std::shared_ptr<BoundarySampler<T, DIM>> reflectingBoundarySampler;
     std::shared_ptr<DomainSampler<T, DIM>> domainSampler;
-    WalkOnStars<T, DIM> walkOnStars;
-    BoundaryValueCaching<T, DIM> boundaryValueCaching;
+    WalkOnStars<T, DIM, GeoQs> walkOnStars;
+    BoundaryValueCaching<T, DIM, GeoQs> boundaryValueCaching;
     std::vector<SamplePoint<T, DIM>> absorbingBoundaryCache;
     std::vector<SamplePoint<T, DIM>> absorbingBoundaryCacheNormalAligned;
     std::vector<SamplePoint<T, DIM>> reflectingBoundaryCache;
@@ -305,16 +305,16 @@ inline void EvaluationPoint<T, DIM>::reset()
     sourceStatistics.reset();
 }
 
-template <typename T, size_t DIM>
-inline BoundaryValueCaching<T, DIM>::BoundaryValueCaching(const GeometricQueries<DIM>& queries_,
-                                                          const WalkOnStars<T, DIM>& walkOnStars_):
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline BoundaryValueCaching<T, DIM, GeoQs>::BoundaryValueCaching(const GeoQs& queries_,
+                                                          const WalkOnStars<T, DIM, GeoQs>& walkOnStars_):
                                                           queries(queries_), walkOnStars(walkOnStars_)
 {
     // do nothing
 }
 
-template <typename T, size_t DIM>
-inline void BoundaryValueCaching<T, DIM>::computeBoundaryEstimates(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void BoundaryValueCaching<T, DIM, GeoQs>::computeBoundaryEstimates(const PDE<T, DIM>& pde,
                                                                    const WalkSettings& walkSettings,
                                                                    int nWalksForSolutionEstimates,
                                                                    int nWalksForGradientEstimates,
@@ -340,8 +340,8 @@ inline void BoundaryValueCaching<T, DIM>::computeBoundaryEstimates(const PDE<T, 
                              useFiniteDifferences, samplePts, sampleStatistics);
 }
 
-template <typename T, size_t DIM>
-inline void BoundaryValueCaching<T, DIM>::setSourceValues(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void BoundaryValueCaching<T, DIM, GeoQs>::setSourceValues(const PDE<T, DIM>& pde,
                                                           std::vector<SamplePoint<T, DIM>>& samplePts,
                                                           bool runSingleThreaded) const
 {
@@ -365,8 +365,8 @@ inline void BoundaryValueCaching<T, DIM>::setSourceValues(const PDE<T, DIM>& pde
     }
 }
 
-template <typename T, size_t DIM>
-inline void BoundaryValueCaching<T, DIM>::splat(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void BoundaryValueCaching<T, DIM, GeoQs>::splat(const PDE<T, DIM>& pde,
                                                 const SamplePoint<T, DIM>& samplePt,
                                                 float radiusClamp,
                                                 float kernelRegularization,
@@ -401,8 +401,8 @@ inline void BoundaryValueCaching<T, DIM>::splat(const PDE<T, DIM>& pde,
     }
 }
 
-template <typename T, size_t DIM>
-inline void BoundaryValueCaching<T, DIM>::splat(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void BoundaryValueCaching<T, DIM, GeoQs>::splat(const PDE<T, DIM>& pde,
                                                 const std::vector<SamplePoint<T, DIM>>& samplePts,
                                                 float radiusClamp,
                                                 float kernelRegularization,
@@ -439,8 +439,8 @@ inline void BoundaryValueCaching<T, DIM>::splat(const PDE<T, DIM>& pde,
     }
 }
 
-template <typename T, size_t DIM>
-inline void BoundaryValueCaching<T, DIM>::splat(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void BoundaryValueCaching<T, DIM, GeoQs>::splat(const PDE<T, DIM>& pde,
                                                 const SamplePoint<T, DIM>& samplePt,
                                                 float radiusClamp,
                                                 float kernelRegularization,
@@ -472,8 +472,8 @@ inline void BoundaryValueCaching<T, DIM>::splat(const PDE<T, DIM>& pde,
     }
 }
 
-template <typename T, size_t DIM>
-inline void BoundaryValueCaching<T, DIM>::splat(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void BoundaryValueCaching<T, DIM, GeoQs>::splat(const PDE<T, DIM>& pde,
                                                 const std::vector<SamplePoint<T, DIM>>& samplePts,
                                                 float radiusClamp,
                                                 float kernelRegularization,
@@ -499,8 +499,8 @@ inline void BoundaryValueCaching<T, DIM>::splat(const PDE<T, DIM>& pde,
     }
 }
 
-template <typename T, size_t DIM>
-inline void BoundaryValueCaching<T, DIM>::estimateSolutionNearBoundary(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void BoundaryValueCaching<T, DIM, GeoQs>::estimateSolutionNearBoundary(const PDE<T, DIM>& pde,
                                                                        const WalkSettings& walkSettings,
                                                                        bool useDistanceToAbsorbingBoundary,
                                                                        float cutoffDistToBoundary, int nWalks,
@@ -530,8 +530,8 @@ inline void BoundaryValueCaching<T, DIM>::estimateSolutionNearBoundary(const PDE
     }
 }
 
-template <typename T, size_t DIM>
-inline void BoundaryValueCaching<T, DIM>::estimateSolutionNearBoundary(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void BoundaryValueCaching<T, DIM, GeoQs>::estimateSolutionNearBoundary(const PDE<T, DIM>& pde,
                                                                        const WalkSettings& walkSettings,
                                                                        bool useDistanceToAbsorbingBoundary,
                                                                        float cutoffDistToBoundary, int nWalks,
@@ -558,8 +558,8 @@ inline void BoundaryValueCaching<T, DIM>::estimateSolutionNearBoundary(const PDE
     }
 }
 
-template <typename T, size_t DIM>
-inline void BoundaryValueCaching<T, DIM>::setEstimationData(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void BoundaryValueCaching<T, DIM, GeoQs>::setEstimationData(const PDE<T, DIM>& pde,
                                                             const WalkSettings& walkSettings,
                                                             int nWalksForSolutionEstimates,
                                                             int nWalksForGradientEstimates,
@@ -620,8 +620,8 @@ inline void BoundaryValueCaching<T, DIM>::setEstimationData(const PDE<T, DIM>& p
     }
 }
 
-template <typename T, size_t DIM>
-inline void BoundaryValueCaching<T, DIM>::setEstimatedBoundaryData(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void BoundaryValueCaching<T, DIM, GeoQs>::setEstimatedBoundaryData(const PDE<T, DIM>& pde,
                                                                    const WalkSettings& walkSettings,
                                                                    float robinCoeffCutoffForNormalDerivative,
                                                                    bool useFiniteDifferences,
@@ -673,8 +673,8 @@ inline void BoundaryValueCaching<T, DIM>::setEstimatedBoundaryData(const PDE<T, 
     }
 }
 
-template <typename T, size_t DIM>
-inline void BoundaryValueCaching<T, DIM>::splatBoundaryData(const SamplePoint<T, DIM>& samplePt,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void BoundaryValueCaching<T, DIM, GeoQs>::splatBoundaryData(const SamplePoint<T, DIM>& samplePt,
                                                             const std::unique_ptr<GreensFnFreeSpace<DIM>>& greensFn,
                                                             float radiusClamp,
                                                             float kernelRegularization,
@@ -763,8 +763,8 @@ inline void BoundaryValueCaching<T, DIM>::splatBoundaryData(const SamplePoint<T,
     }
 }
 
-template <typename T, size_t DIM>
-inline void BoundaryValueCaching<T, DIM>::splatSourceData(const SamplePoint<T, DIM>& samplePt,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void BoundaryValueCaching<T, DIM, GeoQs>::splatSourceData(const SamplePoint<T, DIM>& samplePt,
                                                           const std::unique_ptr<GreensFnFreeSpace<DIM>>& greensFn,
                                                           float radiusClamp,
                                                           float kernelRegularization,
@@ -805,8 +805,8 @@ inline void BoundaryValueCaching<T, DIM>::splatSourceData(const SamplePoint<T, D
     evalPt.sourceStatistics.addGradientEstimate(gradientEstimate);
 }
 
-template <typename T, size_t DIM>
-inline BoundaryValueCachingSolver<T, DIM>::BoundaryValueCachingSolver(const GeometricQueries<DIM>& queries_,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline BoundaryValueCachingSolver<T, DIM, GeoQs>::BoundaryValueCachingSolver(const GeoQs& queries_,
                                                                       std::shared_ptr<BoundarySampler<T, DIM>> absorbingBoundarySampler_,
                                                                       std::shared_ptr<BoundarySampler<T, DIM>> reflectingBoundarySampler_,
                                                                       std::shared_ptr<DomainSampler<T, DIM>> domainSampler_):
@@ -819,8 +819,8 @@ inline BoundaryValueCachingSolver<T, DIM>::BoundaryValueCachingSolver(const Geom
     // do nothing
 }
 
-template <typename T, size_t DIM>
-inline void BoundaryValueCachingSolver<T, DIM>::generateSamples(int absorbingBoundaryCacheSize,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void BoundaryValueCachingSolver<T, DIM, GeoQs>::generateSamples(int absorbingBoundaryCacheSize,
                                                                 int reflectingBoundaryCacheSize,
                                                                 int domainCacheSize,
                                                                 float normalOffsetForAbsorbingBoundary,
@@ -848,8 +848,8 @@ inline void BoundaryValueCachingSolver<T, DIM>::generateSamples(int absorbingBou
     domainSampler->generateSamples(domainCacheSize, queries, domainCache);
 }
 
-template <typename T, size_t DIM>
-inline void BoundaryValueCachingSolver<T, DIM>::computeSampleEstimates(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void BoundaryValueCachingSolver<T, DIM, GeoQs>::computeSampleEstimates(const PDE<T, DIM>& pde,
                                                                        const WalkSettings& walkSettings,
                                                                        int nWalksForSolutionEstimates,
                                                                        int nWalksForGradientEstimates,
@@ -877,8 +877,8 @@ inline void BoundaryValueCachingSolver<T, DIM>::computeSampleEstimates(const PDE
     boundaryValueCaching.setSourceValues(pde, domainCache, runSingleThreaded);
 }
 
-template <typename T, size_t DIM>
-inline void BoundaryValueCachingSolver<T, DIM>::splat(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void BoundaryValueCachingSolver<T, DIM, GeoQs>::splat(const PDE<T, DIM>& pde,
                                                      float radiusClamp,
                                                      float kernelRegularization,
                                                      float robinCoeffCutoffForNormalDerivative,
@@ -904,8 +904,8 @@ inline void BoundaryValueCachingSolver<T, DIM>::splat(const PDE<T, DIM>& pde,
                                cutoffDistToReflectingBoundary, evalPts, reportProgress);
 }
 
-template <typename T, size_t DIM>
-inline void BoundaryValueCachingSolver<T, DIM>::estimateSolutionNearBoundary(const PDE<T, DIM>& pde,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void BoundaryValueCachingSolver<T, DIM, GeoQs>::estimateSolutionNearBoundary(const PDE<T, DIM>& pde,
                                                                              const WalkSettings& walkSettings,
                                                                              float cutoffDistToAbsorbingBoundary,
                                                                              float cutoffDistToReflectingBoundary,
@@ -919,20 +919,20 @@ inline void BoundaryValueCachingSolver<T, DIM>::estimateSolutionNearBoundary(con
                                                       nWalksForSolutionEstimates, evalPts, runSingleThreaded);
 }
 
-template <typename T, size_t DIM>
-inline const std::vector<SamplePoint<T, DIM>>& BoundaryValueCachingSolver<T, DIM>::getAbsorbingBoundaryCache(bool returnBoundaryNormalAligned) const
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline const std::vector<SamplePoint<T, DIM>>& BoundaryValueCachingSolver<T, DIM, GeoQs>::getAbsorbingBoundaryCache(bool returnBoundaryNormalAligned) const
 {
     return returnBoundaryNormalAligned ? absorbingBoundaryCacheNormalAligned : absorbingBoundaryCache;
 }
 
-template <typename T, size_t DIM>
-inline const std::vector<SamplePoint<T, DIM>>& BoundaryValueCachingSolver<T, DIM>::getReflectingBoundaryCache(bool returnBoundaryNormalAligned) const
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline const std::vector<SamplePoint<T, DIM>>& BoundaryValueCachingSolver<T, DIM, GeoQs>::getReflectingBoundaryCache(bool returnBoundaryNormalAligned) const
 {
     return returnBoundaryNormalAligned ? reflectingBoundaryCacheNormalAligned : reflectingBoundaryCache;
 }
 
-template <typename T, size_t DIM>
-inline const std::vector<SamplePoint<T, DIM>>& BoundaryValueCachingSolver<T, DIM>::getDomainCache() const
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline const std::vector<SamplePoint<T, DIM>>& BoundaryValueCachingSolver<T, DIM, GeoQs>::getDomainCache() const
 {
     return domainCache;
 }
