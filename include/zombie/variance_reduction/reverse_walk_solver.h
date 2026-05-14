@@ -54,9 +54,9 @@ class ReverseWalkOnStarsSolver {
 public:
     // constructor
     ReverseWalkOnStarsSolver(const GeoQs& queries_,
-                             std::shared_ptr<BoundarySampler<T, DIM>> absorbingBoundarySampler_,
-                             std::shared_ptr<BoundarySampler<T, DIM>> reflectingBoundarySampler_,
-                             std::shared_ptr<DomainSampler<T, DIM>> domainSampler_);
+                             std::shared_ptr<BoundarySampler<T, DIM, GeoQs>> absorbingBoundarySampler_,
+                             std::shared_ptr<BoundarySampler<T, DIM, GeoQs>> reflectingBoundarySampler_,
+                             std::shared_ptr<DomainSampler<T, DIM, GeoQs>> domainSampler_);
 
     // generates boundary and domain samples
     void generateSamples(int absorbingBoundarySampleCount,
@@ -89,9 +89,9 @@ public:
 protected:
     // members
     const GeoQs& queries;
-    std::shared_ptr<BoundarySampler<T, DIM>> absorbingBoundarySampler;
-    std::shared_ptr<BoundarySampler<T, DIM>> reflectingBoundarySampler;
-    std::shared_ptr<DomainSampler<T, DIM>> domainSampler;
+    std::shared_ptr<BoundarySampler<T, DIM, GeoQs>> absorbingBoundarySampler;
+    std::shared_ptr<BoundarySampler<T, DIM, GeoQs>> reflectingBoundarySampler;
+    std::shared_ptr<DomainSampler<T, DIM, GeoQs>> domainSampler;
     std::vector<SamplePoint<T, DIM>> absorbingBoundarySamplePts;
     std::vector<SamplePoint<T, DIM>> absorbingBoundaryNormalAlignedSamplePts;
     std::vector<SamplePoint<T, DIM>> reflectingBoundarySamplePts;
@@ -176,9 +176,9 @@ void EvaluationPoint<T, DIM>::reset()
 
 template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs, typename NearestNeighborFinder>
 inline ReverseWalkOnStarsSolver<T, DIM, GeoQs, NearestNeighborFinder>::ReverseWalkOnStarsSolver(const GeoQs& queries_,
-                                                                                         std::shared_ptr<BoundarySampler<T, DIM>> absorbingBoundarySampler_,
-                                                                                         std::shared_ptr<BoundarySampler<T, DIM>> reflectingBoundarySampler_,
-                                                                                         std::shared_ptr<DomainSampler<T, DIM>> domainSampler_):
+                                                                                         std::shared_ptr<BoundarySampler<T, DIM, GeoQs>> absorbingBoundarySampler_,
+                                                                                         std::shared_ptr<BoundarySampler<T, DIM, GeoQs>> reflectingBoundarySampler_,
+                                                                                         std::shared_ptr<DomainSampler<T, DIM, GeoQs>> domainSampler_):
                                                                                          queries(queries_),
                                                                                          absorbingBoundarySampler(absorbingBoundarySampler_),
                                                                                          reflectingBoundarySampler(reflectingBoundarySampler_),

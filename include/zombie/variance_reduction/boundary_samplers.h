@@ -12,7 +12,7 @@
 
 namespace zombie {
 
-template <typename T, size_t DIM>
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
 class BoundarySampler {
 public:
     // destructor
@@ -27,13 +27,13 @@ public:
     // generates sample points on the boundary
     virtual void generateSamples(int nSamples, SampleType sampleType,
                                  float normalOffsetForBoundary,
-                                 const GeometricQueries<DIM>& queries,
+                                 const GeoQs& queries,
                                  std::vector<SamplePoint<T, DIM>>& samplePts,
                                  bool generateBoundaryNormalAlignedSamples=false) = 0;
 };
 
-template <typename T>
-class UniformLineSegmentBoundarySampler: public BoundarySampler<T, 2> {
+template <typename T, IsGeometricQueries<2> GeoQs>
+class UniformLineSegmentBoundarySampler: public BoundarySampler<T, 2, GeoQs> {
 public:
     // constructor
     UniformLineSegmentBoundarySampler(const std::vector<Vector2>& positions_,
@@ -50,7 +50,7 @@ public:
     // generates uniformly distributed sample points on the boundary
     void generateSamples(int nSamples, SampleType sampleType,
                          float normalOffsetForBoundary,
-                         const GeometricQueries<2>& queries,
+                         const GeoQs& queries,
                          std::vector<SamplePoint<T, 2>>& samplePts,
                          bool generateBoundaryNormalAlignedSamples=false);
 
@@ -75,7 +75,7 @@ private:
     // generates uniformly distributed sample points on the boundary
     void generateSamples(int nSamples, SampleType sampleType,
                          float normalOffsetForBoundary,
-                         const GeometricQueries<2>& queries,
+                         const GeoQs& queries,
                          const CDFTable& table, float area,
                          std::vector<SamplePoint<T, 2>>& samplePts);
 
@@ -89,15 +89,15 @@ private:
     float boundaryArea, boundaryAreaNormalAligned;
 };
 
-template <typename T>
-std::shared_ptr<BoundarySampler<T, 2>> createUniformLineSegmentBoundarySampler(
+template <typename T, IsGeometricQueries<2> GeoQs>
+std::shared_ptr<BoundarySampler<T, 2, GeoQs>> createUniformLineSegmentBoundarySampler(
                                         const std::vector<Vector2>& positions,
                                         const std::vector<Vector2i>& indices,
                                         std::function<bool(const Vector2&)> insideSolveRegion,
                                         bool computeWeightedNormals=false);
 
-template <typename T>
-class UniformTriangleBoundarySampler: public BoundarySampler<T, 3> {
+template <typename T, IsGeometricQueries<3> GeoQs >
+class UniformTriangleBoundarySampler: public BoundarySampler<T, 3, GeoQs> {
 public:
     // constructor
     UniformTriangleBoundarySampler(const std::vector<Vector3>& positions_,
@@ -114,7 +114,7 @@ public:
     // generates uniformly distributed sample points on the boundary
     void generateSamples(int nSamples, SampleType sampleType,
                          float normalOffsetForBoundary,
-                         const GeometricQueries<3>& queries,
+                         const GeoQs& queries,
                          std::vector<SamplePoint<T, 3>>& samplePts,
                          bool generateBoundaryNormalAlignedSamples=false);
 
@@ -139,7 +139,7 @@ private:
     // generates uniformly distributed sample points on the boundary
     void generateSamples(int nSamples, SampleType sampleType,
                          float normalOffsetForBoundary,
-                         const GeometricQueries<3>& queries,
+                         const GeoQs& queries,
                          const CDFTable& table, float area,
                          std::vector<SamplePoint<T, 3>>& samplePts);
 
@@ -153,8 +153,8 @@ private:
     float boundaryArea, boundaryAreaNormalAligned;
 };
 
-template <typename T>
-std::shared_ptr<BoundarySampler<T, 3>> createUniformTriangleBoundarySampler(
+template <typename T, IsGeometricQueries<3> GeoQs>
+std::shared_ptr<BoundarySampler<T, 3, GeoQs>> createUniformTriangleBoundarySampler(
                                         const std::vector<Vector3>& positions,
                                         const std::vector<Vector3i>& indices,
                                         std::function<bool(const Vector3&)> insideSolveRegion,
@@ -166,8 +166,8 @@ std::shared_ptr<BoundarySampler<T, 3>> createUniformTriangleBoundarySampler(
 // - improve stratification, since it helps reduce clumping/singular artifacts
 // - sample points on the boundary in proportion to dirichlet/neumann/robin boundary values
 
-template <typename T>
-inline UniformLineSegmentBoundarySampler<T>::UniformLineSegmentBoundarySampler(const std::vector<Vector2>& positions_,
+template <typename T, IsGeometricQueries<2> GeoQs>
+inline UniformLineSegmentBoundarySampler<T, GeoQs>::UniformLineSegmentBoundarySampler(const std::vector<Vector2>& positions_,
                                                                                const std::vector<Vector2i>& indices_,
                                                                                std::function<bool(const Vector2&)> insideSolveRegion_,
                                                                                bool computeWeightedNormals):
@@ -181,8 +181,8 @@ inline UniformLineSegmentBoundarySampler<T>::UniformLineSegmentBoundarySampler(c
     computeNormals(computeWeightedNormals);
 }
 
-template <typename T>
-inline void UniformLineSegmentBoundarySampler<T>::computeNormals(bool computeWeighted)
+template <typename T, IsGeometricQueries<2> GeoQs>
+inline void UniformLineSegmentBoundarySampler<T, GeoQs>::computeNormals(bool computeWeighted)
 {
     int nPrimitives = (int)indices.size();
     int nPositions = (int)positions.size();
@@ -203,8 +203,8 @@ inline void UniformLineSegmentBoundarySampler<T>::computeNormals(bool computeWei
     }
 }
 
-template <typename T>
-inline void UniformLineSegmentBoundarySampler<T>::buildCDFTable(CDFTable& table, float& area,
+template <typename T, IsGeometricQueries<2> GeoQs>
+inline void UniformLineSegmentBoundarySampler<T, GeoQs>::buildCDFTable(CDFTable& table, float& area,
                                                                 float normalOffsetForBoundary)
 {
     int nPrimitives = (int)indices.size();
@@ -228,8 +228,8 @@ inline void UniformLineSegmentBoundarySampler<T>::buildCDFTable(CDFTable& table,
     area = table.build(weights);
 }
 
-template <typename T>
-inline void UniformLineSegmentBoundarySampler<T>::initialize(float normalOffsetForBoundary, bool solveDoubleSided)
+template <typename T, IsGeometricQueries<2> GeoQs>
+inline void UniformLineSegmentBoundarySampler<T, GeoQs>::initialize(float normalOffsetForBoundary, bool solveDoubleSided)
 {
     // build a cdf table for boundary vertices displaced along inward normals
     buildCDFTable(cdfTable, boundaryArea, -1.0f*normalOffsetForBoundary);
@@ -240,18 +240,18 @@ inline void UniformLineSegmentBoundarySampler<T>::initialize(float normalOffsetF
     }
 }
 
-template <typename T>
-inline int UniformLineSegmentBoundarySampler<T>::getSampleCount(int nTotalSamples, bool boundaryNormalAlignedSamples) const
+template <typename T, IsGeometricQueries<2> GeoQs>
+inline int UniformLineSegmentBoundarySampler<T, GeoQs>::getSampleCount(int nTotalSamples, bool boundaryNormalAlignedSamples) const
 {
     float totalBoundaryArea = boundaryArea + boundaryAreaNormalAligned;
     return boundaryNormalAlignedSamples ? std::ceil(nTotalSamples*boundaryAreaNormalAligned/totalBoundaryArea) :
                                           std::ceil(nTotalSamples*boundaryArea/totalBoundaryArea);
 }
 
-template <typename T>
-inline void UniformLineSegmentBoundarySampler<T>::generateSamples(int nSamples, SampleType sampleType,
+template <typename T, IsGeometricQueries<2> GeoQs>
+inline void UniformLineSegmentBoundarySampler<T, GeoQs>::generateSamples(int nSamples, SampleType sampleType,
                                                                   float normalOffsetForBoundary,
-                                                                  const GeometricQueries<2>& queries,
+                                                                  const GeoQs& queries,
                                                                   const CDFTable& table, float area,
                                                                   std::vector<SamplePoint<T, 2>>& samplePts)
 {
@@ -309,10 +309,10 @@ inline void UniformLineSegmentBoundarySampler<T>::generateSamples(int nSamples, 
     }
 }
 
-template <typename T>
-inline void UniformLineSegmentBoundarySampler<T>::generateSamples(int nSamples, SampleType sampleType,
+template <typename T, IsGeometricQueries<2> GeoQs>
+inline void UniformLineSegmentBoundarySampler<T, GeoQs>::generateSamples(int nSamples, SampleType sampleType,
                                                                   float normalOffsetForBoundary,
-                                                                  const GeometricQueries<2>& queries,
+                                                                  const GeoQs& queries,
                                                                   std::vector<SamplePoint<T, 2>>& samplePts,
                                                                   bool generateBoundaryNormalAlignedSamples)
 {
@@ -330,19 +330,19 @@ inline void UniformLineSegmentBoundarySampler<T>::generateSamples(int nSamples, 
     }
 }
 
-template <typename T>
-std::shared_ptr<BoundarySampler<T, 2>> createUniformLineSegmentBoundarySampler(
+template <typename T, IsGeometricQueries<2> GeoQs>
+std::shared_ptr<BoundarySampler<T, 2, GeoQs>> createUniformLineSegmentBoundarySampler(
                                         const std::vector<Vector2>& positions,
                                         const std::vector<Vector2i>& indices,
                                         std::function<bool(const Vector2&)> insideSolveRegion,
                                         bool computeWeightedNormals)
 {
-    return std::make_shared<UniformLineSegmentBoundarySampler<T>>(
+    return std::make_shared<UniformLineSegmentBoundarySampler<T, GeoQs>>(
             positions, indices, insideSolveRegion, computeWeightedNormals);
 }
 
-template <typename T>
-inline UniformTriangleBoundarySampler<T>::UniformTriangleBoundarySampler(const std::vector<Vector3>& positions_,
+template <typename T, IsGeometricQueries<3> GeoQs>
+inline UniformTriangleBoundarySampler<T, GeoQs>::UniformTriangleBoundarySampler(const std::vector<Vector3>& positions_,
                                                                          const std::vector<Vector3i>& indices_,
                                                                          std::function<bool(const Vector3&)> insideSolveRegion_,
                                                                          bool computeWeightedNormals):
@@ -356,8 +356,8 @@ inline UniformTriangleBoundarySampler<T>::UniformTriangleBoundarySampler(const s
     computeNormals(computeWeightedNormals);
 }
 
-template <typename T>
-inline void UniformTriangleBoundarySampler<T>::computeNormals(bool computeWeighted)
+template <typename T, IsGeometricQueries<3> GeoQs>
+inline void UniformTriangleBoundarySampler<T, GeoQs>::computeNormals(bool computeWeighted)
 {
     int nPrimitives = (int)indices.size();
     int nPositions = (int)positions.size();
@@ -385,8 +385,8 @@ inline void UniformTriangleBoundarySampler<T>::computeNormals(bool computeWeight
     }
 }
 
-template <typename T>
-inline void UniformTriangleBoundarySampler<T>::buildCDFTable(CDFTable& table, float& area,
+template <typename T, IsGeometricQueries<3> GeoQs>
+inline void UniformTriangleBoundarySampler<T, GeoQs>::buildCDFTable(CDFTable& table, float& area,
                                                              float normalOffsetForBoundary)
 {
     int nPrimitives = (int)indices.size();
@@ -412,8 +412,8 @@ inline void UniformTriangleBoundarySampler<T>::buildCDFTable(CDFTable& table, fl
     area = table.build(weights);
 }
 
-template <typename T>
-inline void UniformTriangleBoundarySampler<T>::initialize(float normalOffsetForBoundary, bool solveDoubleSided)
+template <typename T, IsGeometricQueries<3> GeoQs>
+inline void UniformTriangleBoundarySampler<T, GeoQs>::initialize(float normalOffsetForBoundary, bool solveDoubleSided)
 {
     // build a cdf table for boundary vertices displaced along inward normals
     buildCDFTable(cdfTable, boundaryArea, -1.0f*normalOffsetForBoundary);
@@ -424,18 +424,18 @@ inline void UniformTriangleBoundarySampler<T>::initialize(float normalOffsetForB
     }
 }
 
-template <typename T>
-inline int UniformTriangleBoundarySampler<T>::getSampleCount(int nTotalSamples, bool boundaryNormalAlignedSamples) const
+template <typename T, IsGeometricQueries<3> GeoQs>
+inline int UniformTriangleBoundarySampler<T, GeoQs>::getSampleCount(int nTotalSamples, bool boundaryNormalAlignedSamples) const
 {
     float totalBoundaryArea = boundaryArea + boundaryAreaNormalAligned;
     return boundaryNormalAlignedSamples ? std::ceil(nTotalSamples*boundaryAreaNormalAligned/totalBoundaryArea) :
                                           std::ceil(nTotalSamples*boundaryArea/totalBoundaryArea);
 }
 
-template <typename T>
-inline void UniformTriangleBoundarySampler<T>::generateSamples(int nSamples, SampleType sampleType,
+template <typename T, IsGeometricQueries<3> GeoQs>
+inline void UniformTriangleBoundarySampler<T, GeoQs>::generateSamples(int nSamples, SampleType sampleType,
                                                                float normalOffsetForBoundary,
-                                                               const GeometricQueries<3>& queries,
+                                                               const GeoQs& queries,
                                                                const CDFTable& table, float area,
                                                                std::vector<SamplePoint<T, 3>>& samplePts)
 {
@@ -495,10 +495,10 @@ inline void UniformTriangleBoundarySampler<T>::generateSamples(int nSamples, Sam
     }
 }
 
-template <typename T>
-inline void UniformTriangleBoundarySampler<T>::generateSamples(int nSamples, SampleType sampleType,
+template <typename T, IsGeometricQueries<3> GeoQs>
+inline void UniformTriangleBoundarySampler<T, GeoQs>::generateSamples(int nSamples, SampleType sampleType,
                                                                float normalOffsetForBoundary,
-                                                               const GeometricQueries<3>& queries,
+                                                               const GeoQs& queries,
                                                                std::vector<SamplePoint<T, 3>>& samplePts,
                                                                bool generateBoundaryNormalAlignedSamples)
 {
@@ -516,14 +516,14 @@ inline void UniformTriangleBoundarySampler<T>::generateSamples(int nSamples, Sam
     }
 }
 
-template <typename T>
-std::shared_ptr<BoundarySampler<T, 3>> createUniformTriangleBoundarySampler(
+template <typename T, IsGeometricQueries<3> GeoQs>
+std::shared_ptr<BoundarySampler<T, 3, GeoQs>> createUniformTriangleBoundarySampler(
                                         const std::vector<Vector3>& positions,
                                         const std::vector<Vector3i>& indices,
                                         std::function<bool(const Vector3&)> insideSolveRegion,
                                         bool computeWeightedNormals)
 {
-    return std::make_shared<UniformTriangleBoundarySampler<T>>(
+    return std::make_shared<UniformTriangleBoundarySampler<T, GeoQs>>(
             positions, indices, insideSolveRegion, computeWeightedNormals);
 }
 

@@ -7,9 +7,9 @@
 
 using json = nlohmann::json;
 
-template <size_t DIM>
+template <size_t DIM, zombie::IsGeometricQueries<DIM> GeoQs>
 void computeDistanceInfo(const std::vector<zombie::Vector<DIM>>& solveLocations,
-                         const zombie::GeometricQueries<DIM>& queries,
+                         const GeoQs& queries,
                          bool solveDoubleSided, bool solveExterior,
                          std::vector<DistanceInfo>& distanceInfo)
 {
@@ -47,9 +47,9 @@ void createSamplePoints(const std::vector<zombie::Vector<DIM>>& solveLocations,
     }
 }
 
-template <typename T, size_t DIM>
+template <typename T, size_t DIM, zombie::IsGeometricQueries<DIM> GeoQs>
 void runWalkOnSpheres(const json& solverConfig,
-                      const zombie::GeometricQueries<DIM>& queries,
+                      const GeoQs& queries,
                       const zombie::PDE<T, DIM>& pde,
                       bool solveDoubleSided,
                       std::vector<zombie::SamplePoint<T, DIM>>& samplePts,
@@ -93,9 +93,9 @@ void runWalkOnSpheres(const json& solverConfig,
     pb.finish();
 }
 
-template <typename T, size_t DIM>
+template <typename T, size_t DIM, zombie::IsGeometricQueries<DIM> GeoQs>
 void runWalkOnStars(const json& solverConfig,
-                    const zombie::GeometricQueries<DIM>& queries,
+                    const GeoQs& queries,
                     const zombie::PDE<T, DIM>& pde,
                     bool solveDoubleSided,
                     std::vector<zombie::SamplePoint<T, DIM>>& samplePts,
@@ -179,31 +179,31 @@ void createBvcEvaluationPoints(const std::vector<zombie::Vector<DIM>>& solveLoca
     }
 }
 
-template <typename T>
-std::shared_ptr<zombie::BoundarySampler<T, 2>> createBoundarySampler(const std::vector<zombie::Vector2>& boundaryPositions,
+template <typename T, zombie::IsGeometricQueries<2> GeoQs>
+std::shared_ptr<zombie::BoundarySampler<T, 2, GeoQs>> createBoundarySampler(const std::vector<zombie::Vector2>& boundaryPositions,
                                                                      const std::vector<zombie::Vector2i>& boundaryIndices,
-                                                                     const zombie::GeometricQueries<2>& queries)
+                                                                     const GeoQs& queries)
 {
-    return zombie::createUniformLineSegmentBoundarySampler<T>(boundaryPositions, boundaryIndices,
+    return zombie::createUniformLineSegmentBoundarySampler<T, GeoQs>(boundaryPositions, boundaryIndices,
                                                               queries.insideBoundingDomain);
 }
 
-template <typename T>
-std::shared_ptr<zombie::BoundarySampler<T, 3>> createBoundarySampler(const std::vector<zombie::Vector3>& boundaryPositions,
+template <typename T, zombie::IsGeometricQueries<3> GeoQs>
+std::shared_ptr<zombie::BoundarySampler<T, 3, GeoQs>> createBoundarySampler(const std::vector<zombie::Vector3>& boundaryPositions,
                                                                      const std::vector<zombie::Vector3i>& boundaryIndices,
-                                                                     const zombie::GeometricQueries<3>& queries)
+                                                                     const GeoQs& queries)
 {
     return zombie::createUniformTriangleBoundarySampler<T>(boundaryPositions, boundaryIndices,
                                                            queries.insideBoundingDomain);
 }
 
-template <typename T, size_t DIM>
+template <typename T, size_t DIM, zombie::IsGeometricQueries<DIM> GeoQs>
 void runBoundaryValueCaching(const json& solverConfig,
                              const std::vector<zombie::Vector<DIM>>& absorbingBoundaryPositions,
                              const std::vector<zombie::Vectori<DIM>>& absorbingBoundaryIndices,
                              const std::vector<zombie::Vector<DIM>>& reflectingBoundaryPositions,
                              const std::vector<zombie::Vectori<DIM>>& reflectingBoundaryIndices,
-                             const zombie::GeometricQueries<DIM>& queries,
+                             const GeoQs& queries,
                              const zombie::PDE<T, DIM>& pde,
                              bool solveDoubleSided,
                              std::vector<zombie::bvc::EvaluationPoint<T, DIM>>& evalPts)
@@ -246,12 +246,12 @@ void runBoundaryValueCaching(const json& solverConfig,
     const float regularizationForKernels = getOptional<float>(solverConfig, "regularizationForKernels", 0.0f);
 
     // initialize boundary samplers
-    std::shared_ptr<zombie::BoundarySampler<T, DIM>> absorbingBoundarySampler =
-        createBoundarySampler<T>(absorbingBoundaryPositions, absorbingBoundaryIndices, queries);
+    std::shared_ptr<zombie::BoundarySampler<T, DIM, GeoQs>> absorbingBoundarySampler =
+        createBoundarySampler<T, GeoQs>(absorbingBoundaryPositions, absorbingBoundaryIndices, queries);
     absorbingBoundarySampler->initialize(normalOffsetForAbsorbingBoundary, solveDoubleSided);
 
-    std::shared_ptr<zombie::BoundarySampler<T, DIM>> reflectingBoundarySampler =
-        createBoundarySampler<T>(reflectingBoundaryPositions, reflectingBoundaryIndices, queries);
+    std::shared_ptr<zombie::BoundarySampler<T, DIM, GeoQs>> reflectingBoundarySampler =
+        createBoundarySampler<T, GeoQs>(reflectingBoundaryPositions, reflectingBoundaryIndices, queries);
     reflectingBoundarySampler->initialize(normalOffsetForReflectingBoundary, solveDoubleSided);
 
     // initialize domain sampler
@@ -266,8 +266,8 @@ void runBoundaryValueCaching(const json& solverConfig,
         solveRegionVolume = std::fabs(queries.computeDomainSignedVolume());
     }
 
-    std::shared_ptr<zombie::DomainSampler<T, DIM>> domainSampler =
-        zombie::createUniformDomainSampler<T, DIM>(insideSolveRegionDomainSampler,
+    std::shared_ptr<zombie::DomainSampler<T, DIM, GeoQs>> domainSampler =
+        zombie::createUniformDomainSampler<T, DIM, GeoQs>(insideSolveRegionDomainSampler,
                                                    queries.domainMin, queries.domainMax,
                                                    solveRegionVolume);
     if (ignoreSourceContribution) domainCacheSize = 0;
@@ -277,7 +277,7 @@ void runBoundaryValueCaching(const json& solverConfig,
     ProgressBar pb(totalWork);
     std::function<void(int, int)> reportProgress = getReportProgressCallback(pb);
 
-    zombie::bvc::BoundaryValueCachingSolver<T, DIM, decltype(queries)> boundaryValueCaching(
+    zombie::bvc::BoundaryValueCachingSolver<T, DIM, GeoQs> boundaryValueCaching(
         queries, absorbingBoundarySampler, reflectingBoundarySampler, domainSampler);
 
     // generate boundary and domain samples
@@ -349,13 +349,13 @@ void createRwsEvaluationPoints(const std::vector<zombie::Vector<DIM>>& solveLoca
     }
 }
 
-template <typename T, size_t DIM>
+template <typename T, size_t DIM, zombie::IsGeometricQueries<DIM> GeoQs>
 void runReverseWalkOnStars(const json& solverConfig,
                            const std::vector<zombie::Vector<DIM>>& absorbingBoundaryPositions,
                            const std::vector<zombie::Vectori<DIM>>& absorbingBoundaryIndices,
                            const std::vector<zombie::Vector<DIM>>& reflectingBoundaryPositions,
                            const std::vector<zombie::Vectori<DIM>>& reflectingBoundaryIndices,
-                           const zombie::GeometricQueries<DIM>& queries,
+                           const GeoQs& queries,
                            const zombie::PDE<T, DIM>& pde,
                            bool solveDoubleSided,
                            std::vector<zombie::rws::EvaluationPoint<T, DIM>>& evalPts,
@@ -389,13 +389,13 @@ void runReverseWalkOnStars(const json& solverConfig,
     const float regularizationForKernels = getOptional<float>(solverConfig, "regularizationForKernels", 0.0f);
 
     // initialize boundary samplers
-    std::shared_ptr<zombie::BoundarySampler<T, DIM>> absorbingBoundarySampler =
-        createBoundarySampler<T>(absorbingBoundaryPositions, absorbingBoundaryIndices, queries);
+    std::shared_ptr<zombie::BoundarySampler<T, DIM, GeoQs>> absorbingBoundarySampler =
+        createBoundarySampler<T, GeoQs>(absorbingBoundaryPositions, absorbingBoundaryIndices, queries);
     absorbingBoundarySampler->initialize(normalOffsetForAbsorbingBoundary, solveDoubleSided);
     if (ignoreAbsorbingBoundaryContribution) absorbingBoundarySampleCount = 0;
 
-    std::shared_ptr<zombie::BoundarySampler<T, DIM>> reflectingBoundarySampler =
-        createBoundarySampler<T>(reflectingBoundaryPositions, reflectingBoundaryIndices, queries);
+    std::shared_ptr<zombie::BoundarySampler<T, DIM, GeoQs>> reflectingBoundarySampler =
+        createBoundarySampler<T, GeoQs>(reflectingBoundaryPositions, reflectingBoundaryIndices, queries);
     reflectingBoundarySampler->initialize(0.0f, solveDoubleSided);
     if (ignoreReflectingBoundaryContribution) reflectingBoundarySampleCount = 0;
 
@@ -411,8 +411,8 @@ void runReverseWalkOnStars(const json& solverConfig,
         solveRegionVolume = std::fabs(queries.computeDomainSignedVolume());
     }
 
-    std::shared_ptr<zombie::DomainSampler<T, DIM>> domainSampler =
-        zombie::createUniformDomainSampler<T, DIM>(insideSolveRegionDomainSampler,
+    std::shared_ptr<zombie::DomainSampler<T, DIM, GeoQs>> domainSampler =
+        zombie::createUniformDomainSampler<T, DIM, GeoQs>(insideSolveRegionDomainSampler,
                                                    queries.domainMin, queries.domainMax,
                                                    solveRegionVolume);
     if (ignoreSourceContribution) domainSampleCount = 0;
@@ -422,7 +422,7 @@ void runReverseWalkOnStars(const json& solverConfig,
     ProgressBar pb(totalWork);
     std::function<void(int, int)> reportProgress = getReportProgressCallback(pb);
 
-    zombie::rws::ReverseWalkOnStarsSolver<T, DIM, decltype(queries), zombie::NearestNeighborFinder<DIM>> reverseWalkOnStars(
+    zombie::rws::ReverseWalkOnStarsSolver<T, DIM, GeoQs, zombie::NearestNeighborFinder<DIM>> reverseWalkOnStars(
         queries, absorbingBoundarySampler, reflectingBoundarySampler, domainSampler);
 
     // generate boundary and domain samples
@@ -476,13 +476,13 @@ void getSolution(const std::vector<zombie::rws::EvaluationPoint<T, DIM>>& evalPt
     }
 }
 
-template <typename T, size_t DIM>
+template <typename T, size_t DIM, zombie::IsGeometricQueries<DIM> GeoQs>
 void runSolver(const std::string& solverType, const json& solverConfig,
                const std::vector<zombie::Vector<DIM>>& absorbingBoundaryPositions,
                const std::vector<zombie::Vectori<DIM>>& absorbingBoundaryIndices,
                const std::vector<zombie::Vector<DIM>>& reflectingBoundaryPositions,
                const std::vector<zombie::Vectori<DIM>>& reflectingBoundaryIndices,
-               const zombie::GeometricQueries<DIM>& queries,
+               const GeoQs& queries,
                const zombie::PDE<T, DIM>& pde, bool solveDoubleSided,
                const std::vector<zombie::Vector<DIM>>& solveLocations,
                const std::vector<DistanceInfo>& distanceInfo,
@@ -518,7 +518,7 @@ void runSolver(const std::string& solverType, const json& solverConfig,
         createBvcEvaluationPoints<T, DIM>(solveLocations, distanceInfo, evalPts);
 
         // run boundary value caching
-        runBoundaryValueCaching<T, DIM>(solverConfig, absorbingBoundaryPositions, absorbingBoundaryIndices,
+        runBoundaryValueCaching<T, DIM, GeoQs>(solverConfig, absorbingBoundaryPositions, absorbingBoundaryIndices,
                                         reflectingBoundaryPositions, reflectingBoundaryIndices,
                                         queries, pde, solveDoubleSided, evalPts);
 
@@ -532,7 +532,7 @@ void runSolver(const std::string& solverType, const json& solverConfig,
 
         // run reverse walk on stars
         std::vector<int> sampleCounts;
-        runReverseWalkOnStars<T, DIM>(solverConfig, absorbingBoundaryPositions, absorbingBoundaryIndices,
+        runReverseWalkOnStars<T, DIM, GeoQs>(solverConfig, absorbingBoundaryPositions, absorbingBoundaryIndices,
                                       reflectingBoundaryPositions, reflectingBoundaryIndices,
                                       queries, pde, solveDoubleSided, evalPts, sampleCounts);
 
@@ -548,6 +548,8 @@ void runSolver(const std::string& solverType, const json& solverConfig,
 template <typename T>
 int runDemo(const json& config)
 {
+    using GeoQs = zombie::GeometricQueriesDynamic<2>;
+
     // load config settings
     const std::string solverType = getOptional<std::string>(config, "solverType", "wost");
     const json modelProblemConfig = getRequired<json>(config, "modelProblem");
@@ -560,7 +562,7 @@ int runDemo(const json& config)
     const std::vector<Vector2i>& absorbingBoundaryIndices = modelProblem.getAbsorbingBoundaryIndices();
     const std::vector<Vector2i>& reflectingBoundaryIndices = modelProblem.getReflectingBoundaryIndices();
     const std::pair<Vector2, Vector2>& boundingBox = modelProblem.getBoundingBox();
-    const zombie::GeometricQueries<2>& queries = modelProblem.getGeometricQueries();
+    const GeoQs& queries = modelProblem.getGeometricQueries();
     bool solveDoubleSided = modelProblem.solveDoubleSided();
     bool solveExterior = modelProblem.solveExterior();
 
@@ -577,7 +579,7 @@ int runDemo(const json& config)
         const std::vector<Vector2>& invertedAbsorbingBoundaryPositions = modelProblem.getInvertedAbsorbingBoundaryPositions();
         const std::vector<Vector2>& invertedReflectingBoundaryPositions = modelProblem.getInvertedReflectingBoundaryPositions();
         const zombie::PDE<T, 2>& pdeInvertedDomain = modelProblem.getPDEInvertedDomain();
-        const zombie::GeometricQueries<2>& queriesInvertedDomain = modelProblem.getGeometricQueriesInvertedDomain();
+        const GeoQs& queriesInvertedDomain = modelProblem.getGeometricQueriesInvertedDomain();
 
         // invert the solve locations and update the distance info
         int nSolveLocations = (int)solveLocations.size();
@@ -590,7 +592,7 @@ int runDemo(const json& config)
                                solveDoubleSided, false, distanceInfoInvertedDomain);
 
         // run the solver on the inverted domain
-        runSolver<T, 2>(solverType, solverConfig,
+        runSolver<T, 2, GeoQs>(solverType, solverConfig,
                         invertedAbsorbingBoundaryPositions, absorbingBoundaryIndices,
                         invertedReflectingBoundaryPositions, reflectingBoundaryIndices,
                         queriesInvertedDomain, pdeInvertedDomain, solveDoubleSided,
@@ -607,7 +609,7 @@ int runDemo(const json& config)
         const zombie::PDE<T, 2>& pde = modelProblem.getPDE();
 
         // run the solver on the input domain
-        runSolver<T, 2>(solverType, solverConfig,
+        runSolver<T, 2, GeoQs>(solverType, solverConfig,
                         absorbingBoundaryPositions, absorbingBoundaryIndices,
                         reflectingBoundaryPositions, reflectingBoundaryIndices,
                         queries, pde, solveDoubleSided, solveLocations,

@@ -37,7 +37,7 @@ public:
     const std::vector<Vector2>& getReflectingBoundaryPositions() { return mReflectingBoundaryPositions; }
     const std::pair<Vector2, Vector2>& getBoundingBox() { return mBoundingBox; }
     const zombie::PDE<T, 2>& getPDE() { return mPde; }
-    const zombie::GeometricQueries<2>& getGeometricQueries() { return mQueries; }
+    const zombie::GeometricQueriesDynamic<2>& getGeometricQueries() { return mQueries; }
 
     // getters for inverted domain (needed for solving exterior problems)
     const zombie::KelvinTransform<T, 2>& getKelvinTransform() { return mKelvinTransform; }
@@ -45,7 +45,7 @@ public:
     const std::vector<Vector2>& getInvertedReflectingBoundaryPositions() { return mInvertedReflectingBoundaryPositions; }
     const std::pair<Vector2, Vector2>& getInvertedBoundingBox() { return mInvertedBoundingBox; }
     const zombie::PDE<T, 2>& getPDEInvertedDomain() { return mPdeInvertedDomain; }
-    const zombie::GeometricQueries<2>& getGeometricQueriesInvertedDomain() { return mQueriesInvertedDomain; }
+    const zombie::GeometricQueriesDynamic<2>& getGeometricQueriesInvertedDomain() { return mQueriesInvertedDomain; }
 
 protected:
     // loads a boundary mesh from an OBJ file
@@ -71,7 +71,7 @@ protected:
                                   zombie::FcpwDirichletBoundaryHandler<2>& absorbingBoundaryHandler,
                                   zombie::FcpwNeumannBoundaryHandler<2>& reflectingNeumannBoundaryHandler,
                                   zombie::FcpwRobinBoundaryHandler<2>& reflectingRobinBoundaryHandler,
-                                  zombie::GeometricQueries<2>& queries);
+                                  zombie::GeometricQueriesDynamic<2>& queries);
 
     // applies a Kelvin transform to convert an exterior problem into an
     // equivalent interior problem with a modified PDE on the inverted domain
@@ -107,7 +107,7 @@ protected:
     zombie::FcpwDirichletBoundaryHandler<2> mAbsorbingBoundaryHandler;
     zombie::FcpwNeumannBoundaryHandler<2> mReflectingNeumannBoundaryHandler;
     zombie::FcpwRobinBoundaryHandler<2> mReflectingRobinBoundaryHandler;
-    zombie::GeometricQueries<2> mQueries;
+    zombie::GeometricQueriesDynamic<2> mQueries;
 
     zombie::KelvinTransform<T, 2> mKelvinTransform;
     std::vector<Vector2> mInvertedAbsorbingBoundaryPositions;
@@ -120,7 +120,7 @@ protected:
     zombie::FcpwDirichletBoundaryHandler<2> mInvertedAbsorbingBoundaryHandler;
     zombie::FcpwNeumannBoundaryHandler<2> mInvertedReflectingNeumannBoundaryHandler;
     zombie::FcpwRobinBoundaryHandler<2> mInvertedReflectingRobinBoundaryHandler;
-    zombie::GeometricQueries<2> mQueriesInvertedDomain;
+    zombie::GeometricQueriesDynamic<2> mQueriesInvertedDomain;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -286,7 +286,7 @@ void ModelProblem<T>::populateGeometricQueries(const std::vector<Vector2>& absor
                                                zombie::FcpwDirichletBoundaryHandler<2>& absorbingBoundaryHandler,
                                                zombie::FcpwNeumannBoundaryHandler<2>& reflectingNeumannBoundaryHandler,
                                                zombie::FcpwRobinBoundaryHandler<2>& reflectingRobinBoundaryHandler,
-                                               zombie::GeometricQueries<2>& queries)
+                                               zombie::GeometricQueriesDynamic<2>& queries)
 {
     // set the domain extent for geometric queries
     queries.domainIsWatertight = mDomainIsWatertight;

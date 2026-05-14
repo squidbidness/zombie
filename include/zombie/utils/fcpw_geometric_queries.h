@@ -133,15 +133,15 @@ void populateSdfGrid(FcpwDirichletBoundaryHandler<DIM>& dirichletBoundaryHandler
 // populates the GeometricQueries structure
 template <size_t DIM>
 void populateGeometricQueriesForDirichletBoundary(FcpwDirichletBoundaryHandler<DIM>& dirichletBoundaryHandler,
-                                                  GeometricQueries<DIM>& geometricQueries);
+                                                  GeometricQueriesDynamic<DIM>& geometricQueries);
 template <size_t DIM>
 void populateGeometricQueriesForNeumannBoundary(FcpwNeumannBoundaryHandler<DIM>& neumannBoundaryHandler,
                                                 std::function<float(float)> branchTraversalWeight,
-                                                GeometricQueries<DIM>& geometricQueries);
+                                                GeometricQueriesDynamic<DIM>& geometricQueries);
 template <size_t DIM>
 void populateGeometricQueriesForRobinBoundary(FcpwRobinBoundaryHandler<DIM>& robinBoundaryHandler,
                                               std::function<float(float)> branchTraversalWeight,
-                                              GeometricQueries<DIM>& geometricQueries);
+                                              GeometricQueriesDynamic<DIM>& geometricQueries);
 
 std::function<float(float)> getBranchTraversalWeightCallback(float minRadialDist=1e-2f);
 
@@ -1043,7 +1043,7 @@ void populateSdfGrid(FcpwDirichletBoundaryHandler<DIM>& dirichletBoundaryHandler
 
 template <size_t DIM>
 void populateGeometricQueriesForDirichletBoundary(FcpwDirichletBoundaryHandler<DIM>& dirichletBoundaryHandler,
-                                                  GeometricQueries<DIM>& geometricQueries)
+                                                  GeometricQueriesDynamic<DIM>& geometricQueries)
 {
     fcpw::Aggregate<DIM> *absorbingBoundaryAggregate = dirichletBoundaryHandler.scene.getSceneData()->aggregate.get();
     if (absorbingBoundaryAggregate) {
@@ -1125,7 +1125,7 @@ void populateGeometricQueriesForDirichletBoundary(FcpwDirichletBoundaryHandler<D
 template <size_t DIM, typename ReflectingBoundaryAggregateType>
 void populateGeometricQueriesForReflectingBoundary(const ReflectingBoundaryAggregateType *reflectingBoundaryAggregate,
                                                    std::function<float(float)> branchTraversalWeight,
-                                                   GeometricQueries<DIM>& geometricQueries)
+                                                   GeometricQueriesDynamic<DIM>& geometricQueries)
 {
     if (reflectingBoundaryAggregate) {
         geometricQueries.hasNonEmptyReflectingBoundary = true;
@@ -1230,7 +1230,7 @@ void populateGeometricQueriesForReflectingBoundary(const ReflectingBoundaryAggre
 
 template <size_t DIM, typename NeumannBoundaryAggregateType>
 void populateStarRadiusQueryForNeumannBoundary(const NeumannBoundaryAggregateType *reflectingBoundaryAggregate,
-                                               GeometricQueries<DIM>& geometricQueries)
+                                               GeometricQueriesDynamic<DIM>& geometricQueries)
 {
     if (reflectingBoundaryAggregate) {
         geometricQueries.computeStarRadiusForReflectingBoundary = [reflectingBoundaryAggregate](
@@ -1253,7 +1253,7 @@ void populateStarRadiusQueryForNeumannBoundary(const NeumannBoundaryAggregateTyp
 
 template <size_t DIM, typename RobinBoundaryAggregateType>
 void populateStarRadiusQueryForRobinBoundary(const RobinBoundaryAggregateType *reflectingBoundaryAggregate,
-                                             GeometricQueries<DIM>& geometricQueries)
+                                             GeometricQueriesDynamic<DIM>& geometricQueries)
 {
     if (reflectingBoundaryAggregate) {
         geometricQueries.computeStarRadiusForReflectingBoundary = [reflectingBoundaryAggregate](
@@ -1275,7 +1275,7 @@ void populateStarRadiusQueryForRobinBoundary(const RobinBoundaryAggregateType *r
 template <size_t DIM>
 void populateGeometricQueriesForNeumannBoundary(FcpwNeumannBoundaryHandler<DIM>& neumannBoundaryHandler,
                                                 std::function<float(float)> branchTraversalWeight,
-                                                GeometricQueries<DIM>& geometricQueries)
+                                                GeometricQueriesDynamic<DIM>& geometricQueries)
 {
     fcpw::Aggregate<DIM> *reflectingBoundaryAggregate =
         neumannBoundaryHandler.scene.getSceneData()->aggregate.get();
@@ -1288,7 +1288,7 @@ void populateGeometricQueriesForNeumannBoundary(FcpwNeumannBoundaryHandler<DIM>&
 template <size_t DIM>
 void populateGeometricQueriesForRobinBoundary(FcpwRobinBoundaryHandler<DIM>& robinBoundaryHandler,
                                               std::function<float(float)> branchTraversalWeight,
-                                              GeometricQueries<DIM>& geometricQueries)
+                                              GeometricQueriesDynamic<DIM>& geometricQueries)
 {
     std::cerr << "populateGeometricQueriesForRobinBoundary: Unsupported dimension: " << DIM << std::endl;
     exit(EXIT_FAILURE);
@@ -1297,7 +1297,7 @@ void populateGeometricQueriesForRobinBoundary(FcpwRobinBoundaryHandler<DIM>& rob
 template <>
 void populateGeometricQueriesForRobinBoundary<2>(FcpwRobinBoundaryHandler<2>& robinBoundaryHandler,
                                                  std::function<float(float)> branchTraversalWeight,
-                                                 GeometricQueries<2>& geometricQueries)
+                                                 GeometricQueriesDynamic<2>& geometricQueries)
 {
     using PrimitiveBound = FcpwRobinBoundaryHandler<2>::PrimitiveBound;
     if (robinBoundaryHandler.baseline) {
@@ -1335,7 +1335,7 @@ void populateGeometricQueriesForRobinBoundary<2>(FcpwRobinBoundaryHandler<2>& ro
 template <>
 void populateGeometricQueriesForRobinBoundary<3>(FcpwRobinBoundaryHandler<3>& robinBoundaryHandler,
                                                  std::function<float(float)> branchTraversalWeight,
-                                                 GeometricQueries<3>& geometricQueries)
+                                                 GeometricQueriesDynamic<3>& geometricQueries)
 {
     using PrimitiveBound = FcpwRobinBoundaryHandler<3>::PrimitiveBound;
     if (robinBoundaryHandler.baseline) {

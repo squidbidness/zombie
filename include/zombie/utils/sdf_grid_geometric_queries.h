@@ -54,7 +54,7 @@ public:
 };
 
 template <typename Sdf, size_t DIM>
-void populateGeometricQueriesForDirichletBoundary(const Sdf& sdf, GeometricQueries<DIM>& geometricQueries);
+void populateGeometricQueriesForDirichletBoundary(const Sdf& sdf, GeometricQueriesDynamic<DIM>& geometricQueries);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Implementation
@@ -232,7 +232,7 @@ inline Array<float, 1> SdfHierarchy<SdfLeft, SdfRight, DIM>::operator()(const Ve
 }
 
 template <typename Sdf, size_t DIM>
-void populateGeometricQueriesForDirichletBoundary(const Sdf& sdf, GeometricQueries<DIM>& geometricQueries)
+void populateGeometricQueriesForDirichletBoundary(const Sdf& sdf, GeometricQueriesDynamic<DIM>& geometricQueries)
 {
     geometricQueries.hasNonEmptyAbsorbingBoundary = true;
     geometricQueries.computeDistToAbsorbingBoundary = [&sdf](const Vector<DIM>& x,

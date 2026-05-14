@@ -560,25 +560,25 @@ void bindCoreGeometryStructures(nb::module_ m, std::string typeStr)
         .def_rw("normal", &zombie::IntersectionPoint<DIM>::normal)
         .def_rw("dist", &zombie::IntersectionPoint<DIM>::dist);
 
-    nb::class_<zombie::GeometricQueries<DIM>>(core_m, ("GeometricQueries" + typeStr).c_str())
+    nb::class_<zombie::GeometricQueriesConcrete<DIM>>(core_m, ("GeometricQueriesConcrete" + typeStr).c_str())
         .def(nb::init<>())
         .def(nb::init<bool, const zombie::Vector<DIM>&, const zombie::Vector<DIM>&>(),
             "domain_is_watertight"_a, "domain_min"_a, "domain_max"_a)
-        .def_ro("has_non_empty_absorbing_boundary", &zombie::GeometricQueries<DIM>::hasNonEmptyAbsorbingBoundary)
-        .def_ro("has_non_empty_reflecting_boundary", &zombie::GeometricQueries<DIM>::hasNonEmptyReflectingBoundary)
-        .def_ro("domain_is_watertight", &zombie::GeometricQueries<DIM>::domainIsWatertight)
-        .def_ro("domain_min", &zombie::GeometricQueries<DIM>::domainMin)
-        .def_ro("domain_max", &zombie::GeometricQueries<DIM>::domainMax)
-        .def_ro("compute_dist_to_absorbing_boundary", &zombie::GeometricQueries<DIM>::computeDistToAbsorbingBoundary)
-        .def_ro("compute_dist_to_reflecting_boundary", &zombie::GeometricQueries<DIM>::computeDistToReflectingBoundary)
-        .def_ro("compute_dist_to_boundary", &zombie::GeometricQueries<DIM>::computeDistToBoundary)
-        .def_ro("intersect_absorbing_boundary", &zombie::GeometricQueries<DIM>::intersectAbsorbingBoundary)
-        .def_ro("intersect_reflecting_boundary", &zombie::GeometricQueries<DIM>::intersectReflectingBoundary)
-        .def_ro("intersect_boundary", &zombie::GeometricQueries<DIM>::intersectBoundary)
-        .def_ro("inside_domain", &zombie::GeometricQueries<DIM>::insideDomain)
-        .def_ro("inside_bounding_domain", &zombie::GeometricQueries<DIM>::insideBoundingDomain)
-        .def_ro("outside_bounding_domain", &zombie::GeometricQueries<DIM>::outsideBoundingDomain)
-        .def_ro("compute_domain_signed_volume", &zombie::GeometricQueries<DIM>::computeDomainSignedVolume);
+        .def_ro("has_non_empty_absorbing_boundary", &zombie::GeometricQueriesConcrete<DIM>::hasNonEmptyAbsorbingBoundary)
+        .def_ro("has_non_empty_reflecting_boundary", &zombie::GeometricQueriesConcrete<DIM>::hasNonEmptyReflectingBoundary)
+        .def_ro("domain_is_watertight", &zombie::GeometricQueriesConcrete<DIM>::domainIsWatertight)
+        .def_ro("domain_min", &zombie::GeometricQueriesConcrete<DIM>::domainMin)
+        .def_ro("domain_max", &zombie::GeometricQueriesConcrete<DIM>::domainMax)
+        .def_ro("compute_dist_to_absorbing_boundary", &zombie::GeometricQueriesConcrete<DIM>::computeDistToAbsorbingBoundary)
+        .def_ro("compute_dist_to_reflecting_boundary", &zombie::GeometricQueriesConcrete<DIM>::computeDistToReflectingBoundary)
+        .def_ro("compute_dist_to_boundary", &zombie::GeometricQueriesConcrete<DIM>::computeDistToBoundary)
+        .def_ro("intersect_absorbing_boundary", &zombie::GeometricQueriesConcrete<DIM>::intersectAbsorbingBoundary)
+        .def_ro("intersect_reflecting_boundary", &zombie::GeometricQueriesConcrete<DIM>::intersectReflectingBoundary)
+        .def_ro("intersect_boundary", &zombie::GeometricQueriesConcrete<DIM>::intersectBoundary)
+        .def_ro("inside_domain", &zombie::GeometricQueriesConcrete<DIM>::insideDomain)
+        .def_ro("inside_bounding_domain", &zombie::GeometricQueriesConcrete<DIM>::insideBoundingDomain)
+        .def_ro("outside_bounding_domain", &zombie::GeometricQueriesConcrete<DIM>::outsideBoundingDomain)
+        .def_ro("compute_domain_signed_volume", &zombie::GeometricQueriesConcrete<DIM>::computeDomainSignedVolume);
 }
 
 template <typename T, size_t DIM>
@@ -725,7 +725,7 @@ void bindGeometryUtilityFunctions(nb::module_ m, std::string typeStr)
                "Computes the signed volume of a boundary mesh.");
 
     utils_m.def(("compute_dist_to_boundary" + typeStr).c_str(),
-               [](const zombie::GeometricQueries<DIM>& geometricQueries,
+               [](zombie::IsGeometricQueries<DIM> auto const& geometricQueries,
                   const FloatNList<DIM>& solveLocations,
                   FloatList& distToAbsorbingBoundary,
                   FloatList& distToReflectingBoundary) {
@@ -801,13 +801,13 @@ void bindGeometryUtilityFunctions(nb::module_ m, std::string typeStr)
 
     utils_m.def(("populate_geometric_queries_for_dirichlet_boundary" + typeStr).c_str(),
                nb::overload_cast<zombie::FcpwDirichletBoundaryHandler<DIM>&,
-                                 zombie::GeometricQueries<DIM>&>(
+                                 zombie::GeometricQueriesConcrete<DIM>&>(
                &zombie::populateGeometricQueriesForDirichletBoundary<DIM>),
                "fcpw_dirichlet_boundary_handler"_a, "geometric_queries"_a,
                "Populates geometric queries for an absorbing Dirichlet boundary.");
 
     utils_m.def(("populate_geometric_queries_for_dirichlet_boundary" + typeStr).c_str(),
-               nb::overload_cast<const zombie::SdfGrid<DIM>&, zombie::GeometricQueries<DIM>&>(
+               nb::overload_cast<const zombie::SdfGrid<DIM>&, zombie::GeometricQueriesConcrete<DIM>&>(
                &zombie::populateGeometricQueriesForDirichletBoundary<zombie::SdfGrid<DIM>, DIM>),
                "sdf_grid"_a, "geometric_queries"_a,
                "Populates geometric queries for an absorbing Dirichlet boundary.");
@@ -1226,9 +1226,9 @@ void bindWalkOnSpheresSolver(nb::module_ m, std::string typeStr)
     nb::module_ solvers_m = m.def_submodule("Solvers", "Solvers module");
 
     nb::class_<zombie::WalkOnSpheres<T, DIM>>(solvers_m, ("WalkOnSpheres" + typeStr).c_str())
-        .def(nb::init<const zombie::GeometricQueries<DIM>&>(),
+        .def(nb::init<const zombie::GeometricQueriesConcrete<DIM>&>(),
             "geometric_queries"_a)
-        .def(nb::init<const zombie::GeometricQueries<DIM>&, WalkStateToVoidFunc<T, DIM>, WalkCodeStateToTypeFunc<T, DIM>>(),
+        .def(nb::init<const zombie::GeometricQueriesConcrete<DIM>&, WalkStateToVoidFunc<T, DIM>, WalkCodeStateToTypeFunc<T, DIM>>(),
             "geometric_queries"_a, "walk_state_callback"_a, "terminal_contribution_callback"_a)
         .def("solve", nb::overload_cast<const zombie::PDE<T, DIM>&, const zombie::WalkSettings&, int,
                                         zombie::SamplePoint<T, DIM>&, zombie::SampleStatistics<T, DIM>&>(
@@ -1249,9 +1249,9 @@ void bindWalkOnStarsSolver(nb::module_ m, std::string typeStr)
     nb::module_ solvers_m = m.def_submodule("Solvers", "Solvers module");
 
     nb::class_<zombie::WalkOnStars<T, DIM>>(solvers_m, ("WalkOnStars" + typeStr).c_str())
-        .def(nb::init<const zombie::GeometricQueries<DIM>&>(),
+        .def(nb::init<const zombie::GeometricQueriesConcrete<DIM>&>(),
             "geometric_queries"_a)
-        .def(nb::init<const zombie::GeometricQueries<DIM>&, WalkStateToVoidFunc<T, DIM>, WalkCodeStateToTypeFunc<T, DIM>>(),
+        .def(nb::init<const zombie::GeometricQueriesConcrete<DIM>&, WalkStateToVoidFunc<T, DIM>, WalkCodeStateToTypeFunc<T, DIM>>(),
             "geometric_queries"_a, "walk_state_callback"_a, "terminal_contribution_callback"_a)
         .def("solve", nb::overload_cast<const zombie::PDE<T, DIM>&, const zombie::WalkSettings&, int,
                                         zombie::SamplePoint<T, DIM>&, zombie::SampleStatistics<T, DIM>&>(
@@ -1336,7 +1336,7 @@ void bindBoundaryValueCachingSolver(nb::module_ m, std::string typeStr)
     nb::bind_vector<BVCEvaluationPointList<T, DIM>>(solvers_m, ("BVCEvaluationPointList" + typeStr).c_str());
 
     nb::class_<zombie::bvc::BoundaryValueCachingSolver<T, DIM>>(solvers_m, ("BoundaryValueCaching" + typeStr).c_str())
-        .def(nb::init<const zombie::GeometricQueries<DIM>&,
+        .def(nb::init<const zombie::GeometricQueriesConcrete<DIM>&,
                       std::shared_ptr<zombie::BoundarySampler<T, DIM>>,
                       std::shared_ptr<zombie::BoundarySampler<T, DIM>>,
                       std::shared_ptr<zombie::DomainSampler<T, DIM>>>(),
@@ -1387,7 +1387,7 @@ void bindReverseWalkOnStarsSolver(nb::module_ m, std::string typeStr)
 
     nb::class_<zombie::rws::ReverseWalkOnStarsSolver<T, DIM, zombie::NearestNeighborFinder<DIM>>>(
         solvers_m, ("ReverseWalkOnStars" + typeStr).c_str())
-        .def(nb::init<const zombie::GeometricQueries<DIM>&,
+        .def(nb::init<const zombie::GeometricQueriesConcrete<DIM>&,
                       std::shared_ptr<zombie::BoundarySampler<T, DIM>>,
                       std::shared_ptr<zombie::BoundarySampler<T, DIM>>,
                       std::shared_ptr<zombie::DomainSampler<T, DIM>>>(),

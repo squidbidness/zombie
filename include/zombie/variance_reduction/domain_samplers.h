@@ -9,19 +9,19 @@
 
 namespace zombie {
 
-template <typename T, size_t DIM>
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
 class DomainSampler {
 public:
     // destructor
     virtual ~DomainSampler() = default;
 
     // generates sample points inside the user-specified solve region
-    virtual void generateSamples(int nSamples, const GeometricQueries<DIM>& queries,
+    virtual void generateSamples(int nSamples, const GeoQs& queries,
                                  std::vector<SamplePoint<T, DIM>>& samplePts) = 0;
 };
 
-template <typename T, size_t DIM>
-class UniformDomainSampler: public DomainSampler<T, DIM> {
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+class UniformDomainSampler: public DomainSampler<T, DIM, GeoQs> {
 public:
     // constructor
     UniformDomainSampler(std::function<bool(const Vector<DIM>&)> insideSolveRegion_,
@@ -32,7 +32,7 @@ public:
     // generates uniformly distributed sample points inside the solve region;
     // NOTE: may not generate exactly the requested number of samples when the
     // solve region volume does not match the volume of its bounding extents
-    void generateSamples(int nSamples, const GeometricQueries<DIM>& queries,
+    void generateSamples(int nSamples, const GeoQs& queries,
                          std::vector<SamplePoint<T, DIM>>& samplePts);
 
 protected:
@@ -44,8 +44,8 @@ protected:
     float solveRegionVolume;
 };
 
-template <typename T, size_t DIM>
-std::shared_ptr<DomainSampler<T, DIM>> createUniformDomainSampler(
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+std::shared_ptr<DomainSampler<T, DIM, GeoQs>> createUniformDomainSampler(
                                         std::function<bool(const Vector<DIM>&)> insideSolveRegion,
                                         const Vector<DIM>& solveRegionMin,
                                         const Vector<DIM>& solveRegionMax,
@@ -57,8 +57,8 @@ std::shared_ptr<DomainSampler<T, DIM>> createUniformDomainSampler(
 // - improve stratification, since it helps reduce clumping/singular artifacts
 // - sample points in the domain in proportion to source values
 
-template <typename T, size_t DIM>
-inline UniformDomainSampler<T, DIM>::UniformDomainSampler(std::function<bool(const Vector<DIM>&)> insideSolveRegion_,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline UniformDomainSampler<T, DIM, GeoQs>::UniformDomainSampler(std::function<bool(const Vector<DIM>&)> insideSolveRegion_,
                                                           const Vector<DIM>& solveRegionMin_,
                                                           const Vector<DIM>& solveRegionMax_,
                                                           float solveRegionVolume_):
@@ -72,8 +72,8 @@ inline UniformDomainSampler<T, DIM>::UniformDomainSampler(std::function<bool(con
     rng = pcg32(seed);
 }
 
-template <typename T, size_t DIM>
-inline void UniformDomainSampler<T, DIM>::generateSamples(int nSamples, const GeometricQueries<DIM>& queries,
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+inline void UniformDomainSampler<T, DIM, GeoQs>::generateSamples(int nSamples, const GeoQs& queries,
                                                           std::vector<SamplePoint<T, DIM>>& samplePts)
 {
     // initialize sample points
@@ -104,14 +104,14 @@ inline void UniformDomainSampler<T, DIM>::generateSamples(int nSamples, const Ge
     }
 }
 
-template <typename T, size_t DIM>
-std::shared_ptr<DomainSampler<T, DIM>> createUniformDomainSampler(
+template <typename T, size_t DIM, IsGeometricQueries<DIM> GeoQs>
+std::shared_ptr<DomainSampler<T, DIM, GeoQs>> createUniformDomainSampler(
                                         std::function<bool(const Vector<DIM>&)> insideSolveRegion,
                                         const Vector<DIM>& solveRegionMin,
                                         const Vector<DIM>& solveRegionMax,
                                         float solveRegionVolume)
 {
-    return std::make_shared<UniformDomainSampler<T, DIM>>(
+    return std::make_shared<UniformDomainSampler<T, DIM, GeoQs>>(
             insideSolveRegion, solveRegionMin, solveRegionMax, solveRegionVolume);
 }
 

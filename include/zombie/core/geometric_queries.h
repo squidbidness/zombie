@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include <concepts>
 #include <functional>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -102,10 +101,10 @@ concept IsGeometricQueries = requires(T t, Vector<DIM> v, bool b, float f,
 };
 
 template <size_t DIM>
-struct GeometricQueries {
+struct GeometricQueriesDynamic {
     // constructors
-    GeometricQueries();
-    GeometricQueries(bool domainIsWatertight_,
+    GeometricQueriesDynamic();
+    GeometricQueriesDynamic(bool domainIsWatertight_,
                      const Vector<DIM>& domainMin_,
                      const Vector<DIM>& domainMax_);
 
@@ -173,7 +172,7 @@ protected:
 // Implementation
 
 template <size_t DIM>
-inline GeometricQueries<DIM>::GeometricQueries():
+inline GeometricQueriesDynamic<DIM>::GeometricQueriesDynamic():
 hasNonEmptyAbsorbingBoundary(false),
 hasNonEmptyReflectingBoundary(false),
 domainIsWatertight(true),
@@ -184,7 +183,7 @@ domainMax(Vector<DIM>::Constant(std::numeric_limits<float>::max()))
 }
 
 template <size_t DIM>
-inline GeometricQueries<DIM>::GeometricQueries(bool domainIsWatertight_,
+inline GeometricQueriesDynamic<DIM>::GeometricQueriesDynamic(bool domainIsWatertight_,
                                                const Vector<DIM>& domainMin_,
                                                const Vector<DIM>& domainMax_):
 hasNonEmptyAbsorbingBoundary(false),
@@ -253,7 +252,7 @@ inline Vector3 offsetPointAlongDirectionImpl<3>(const Vector3& p, const Vector3&
 }
 
 template <size_t DIM>
-inline void GeometricQueries<DIM>::populate()
+inline void GeometricQueriesDynamic<DIM>::populate()
 {
     computeDistToAbsorbingBoundary = [this](const Vector<DIM>& x, bool computeSignedDistance) -> float {
         Vector<DIM> u = this->domainMin - x;
